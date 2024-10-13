@@ -25,11 +25,13 @@ const TextInputField = ({
 	startAdornment,
 	endAdornment,
 	randomizeOnBlank,
+	disabled,
 	...rest
 }: TextInputFieldProps): JSX.Element => {
 	return (
 		<TextField
 			value={value}
+			disabled={disabled}
 			variant='outlined'
 			onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
 			InputProps={{

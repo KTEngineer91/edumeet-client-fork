@@ -22,3 +22,40 @@ body {
 	height: 100%;
 	width: 100%;
 }
+
+/* Container for the entire breeze shot info */
+.breeze-shot-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+  }
+  
+  /* Image styling */
+  .breeze-shot-image {
+	width: 200px;
+	height: 200px;
+  }
+  
+  /* Container for text (heading and message) */
+  .breeze-shot-text-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 0;
+  }
+  
+  /* Styling for the heading */
+  .breeze-shot-heading {
+	margin-bottom: 0;
+	margin-top: 30px;
+	color: #ffffff;
+  }
+  
+  /* Styling for the paragraph message */
+  .breeze-shot-message {
+	margin: 0;
+	color: #ffffff;
+  }
