@@ -26,7 +26,7 @@ import LoadingIconImage from "../public/images/loading_icon.png";
 type AppParams = {
   id: string;
 };
-const APP_BACKEND_URL = 'https://api.breezeshot.com'
+const APP_BACKEND_URL = 'https://media.breezeshot.com/api-server/api/v1'
 
 interface SnackbarCloseButtonProps {
   snackbarKey: SnackbarKey;
@@ -88,7 +88,7 @@ const App = (): JSX.Element => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `${APP_BACKEND_URL}/api/v1/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
+          `${APP_BACKEND_URL}/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
           {
             method: "GET",
             headers: {
