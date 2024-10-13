@@ -18,7 +18,7 @@ import { Logger } from './utils/Logger';
 
 const ErrorBoundary = lazy(() => import('./views/errorboundary/ErrorBoundary'));
 const App = lazy(() => import('./App'));
-const LandingPage = lazy(() => import('./views/landingpage/LandingPage'));
+// const LandingPage = lazy(() => import('./views/landingpage/LandingPage'));
 const UnsupportedBrowser = lazy(() => import('./views/unsupported/UnsupportedBrowser'));
 
 if (import.meta.env.VITE_APP_DEBUG === '*' || !import.meta.env.PROD) {
@@ -41,8 +41,8 @@ logger.debug('Starting app [baseUrl:%s]', basename);
 const router = createBrowserRouter(
 	createRoutesFromElements(
 		<>
-			<Route path='/' element={<Suspense><LandingPage /></Suspense>} errorElement={<Suspense><ErrorBoundary /></Suspense>} />
-			<Route path='/:id' element={<Suspense><App /></Suspense>} errorElement={<Suspense><ErrorBoundary /></Suspense>} />
+			{/* <Route path='/' element={<Suspense><LandingPage /></Suspense>} errorElement={<Suspense><ErrorBoundary /></Suspense>} /> */}
+			<Route path='/' element={<Suspense><App /></Suspense>} errorElement={<Suspense><ErrorBoundary /></Suspense>} />
 		</>
 	), { basename }
 );
