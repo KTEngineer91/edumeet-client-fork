@@ -26,6 +26,7 @@ import LoadingIconImage from "../public/images/loading_icon.png";
 type AppParams = {
   id: string;
 };
+const APP_BACKEND_URL = 'http://5.161.42.183:3002'
 
 interface SnackbarCloseButtonProps {
   snackbarKey: SnackbarKey;
@@ -87,7 +88,7 @@ const App = (): JSX.Element => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3002/api/v1/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
+          `${APP_BACKEND_URL}/api/v1/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
           {
             method: "GET",
             headers: {
