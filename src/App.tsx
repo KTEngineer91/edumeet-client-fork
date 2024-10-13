@@ -195,7 +195,7 @@ const App = (): JSX.Element => {
         ) : roomState === "lobby" ? (
           <Lobby />
         ) : (
-          roomState === "new" && <Join roomId={roomId} userName={name} />
+          roomState === "new" && <Join roomId={roomId as any} userName={name} />
         )}
       </StyledBackground>
     </SnackbarProvider>
