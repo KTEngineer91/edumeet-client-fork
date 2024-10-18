@@ -59,7 +59,7 @@ let LoadingData = {
   messageText: `Please wait while we'll connect you to the server`,
   image: LoadingIconImage,
 };
-
+let customInterval: any = null;
 const App = (): JSX.Element => {
   const backgroundImage = useAppSelector((state) => state.room.backgroundImage);
   const dispatch = useAppDispatch();
@@ -98,14 +98,19 @@ const App = (): JSX.Element => {
         );
 
         if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        if (!data?.success) {
-          setErrorMessage(data?.message);
+          setErrorMessage("Provided URL is not valid" as any);
+          if (customInterval) {
+            clearInterval(customInterval);
+          }
         } else {
-          setUserData(data?.user);
+          const data = await response.json();
+          if (!data?.success) {
+            setErrorMessage(data?.message);
+          } else {
+            setUserData(data?.user);
+          }
         }
+
         setIsUserEligibleValidated(true);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -116,6 +121,19 @@ const App = (): JSX.Element => {
     } else {
       setIsUserEligibleValidated(true);
     }
+    customInterval = setInterval(() => {
+      if (roomId && topicId && userKey) {
+        fetchData();
+      } else {
+        setIsUserEligibleValidated(true);
+      }
+    }, 10000);
+
+    return () => {
+      if (customInterval) {
+        clearInterval(customInterval);
+      }
+    };
   }, []);
 
   const handleFileDrop = (event: React.DragEvent<HTMLDivElement>): void => {
