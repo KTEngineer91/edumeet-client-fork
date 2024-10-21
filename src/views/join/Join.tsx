@@ -22,6 +22,7 @@ import { meActions } from "../../store/slices/meSlice";
 import AudioOutputChooser from "../../components/devicechooser/AudioOutputChooser";
 import { canSelectAudioOutput } from "../../store/selectors";
 import TestAudioOutputButton from "../../components/audiooutputtest/AudioOutputTest";
+import ImpressumButton from '../../components/controlbuttons/ImpressumButton';
 
 interface JoinProps {
   roomId: string;
@@ -101,7 +102,7 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
         </>
       }
       actions={
-        <Button
+        <><ImpressumButton/><Button
           onClick={handleJoin}
           variant="contained"
           disabled={joinInProgress || mediaLoading}
@@ -109,6 +110,7 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
         >
           {joinLabel()}
         </Button>
+        </>
       }
     />
   );
