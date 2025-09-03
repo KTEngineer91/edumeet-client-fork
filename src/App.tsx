@@ -171,8 +171,7 @@ const App = (): JSX.Element => {
 
   const isValidUrl = roomId && topicId && userKey;
 
-  let name = `${(userData as any)?.firstName} ${(userData as any)?.lastName}`;
-  name = name?.length ? name : (userData as any)?.username;
+  let name = (userData as any)?.username;
 
   const renderBreezeShotInfoContainer = ({
     image,
