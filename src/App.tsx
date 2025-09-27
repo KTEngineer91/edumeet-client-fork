@@ -14,6 +14,7 @@ import Room from "./views/room/Room";
 import { sendFiles } from "./store/actions/filesharingActions";
 import { uiActions } from "./store/slices/uiSlice";
 import { roomActions } from "./store/slices/roomSlice";
+import { permissionsActions } from "./store/slices/permissionsSlice";
 import { permissions } from "./utils/roles";
 import { SnackbarKey, SnackbarProvider, useSnackbar } from "notistack";
 import { IconButton } from "@mui/material";
@@ -22,11 +23,13 @@ import { meActions } from "./store/slices/meSlice";
 import InvalidUrlImage from "../public/images/invalid_url.png";
 import ErrorIconImage from "../public/images/error_icon.png";
 import LoadingIconImage from "../public/images/loading_icon.png";
+import { Logger } from "./utils/Logger";
 
 type AppParams = {
   id: string;
 };
-const APP_BACKEND_URL = 'https://stream.breezeshot.com/api-server/api/v1'
+const APP_BACKEND_URL = 'http://localhost:3002/api/v1'
+const logger = new Logger('App');
 
 interface SnackbarCloseButtonProps {
   snackbarKey: SnackbarKey;
@@ -72,9 +75,31 @@ const App = (): JSX.Element => {
     permissions.SHARE_FILE
   );
   const navigate = useNavigate();
-  const roomId = searchParams.get("roomId");
+  const roomParam = searchParams.get("room");
+  const roomId = searchParams.get("roomId") || roomParam as any;
   const topicId = searchParams.get("topicId");
   const userKey = searchParams.get("userKey");
+  const token = searchParams.get("token");
+  const sessionKey = roomId ? `edumeet:breezeSession:${roomId}` : undefined;
+  const readSession = () => {
+    try {
+      if (!sessionKey) return null;
+      const raw = sessionStorage.getItem(sessionKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const writeSession = (user: any) => {
+    try {
+      if (!sessionKey) return;
+      const payload = { user, ts: Date.now() };
+      sessionStorage.setItem(sessionKey, JSON.stringify(payload));
+    } catch {
+      // ignore storage errors
+    }
+  };
+  const existingSession = readSession();
 
   useEffect(() => {
     dispatch(startListeners());
@@ -85,56 +110,94 @@ const App = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(
-          `${APP_BACKEND_URL}/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          setErrorMessage("Provided URL is not valid" as any);
-          if (customInterval) {
-            clearInterval(customInterval);
-          }
-        } else {
-          const data = await response.json();
-          if (!data?.success) {
-            setErrorMessage(data?.message);
-          } else {
-            setUserData(data?.user);
-          }
+    const validateLegacy = async () => {
+      const response = await fetch(
+        `${APP_BACKEND_URL}/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
+        {
+          method: "GET",
+          headers: { Accept: "application/json" },
         }
+      );
+      if (!response.ok) {
+        setErrorMessage("Provided URL is not valid" as any);
+        return { success: false };
+      }
+      const data = await response.json();
+      if (!data?.success) {
+        setErrorMessage(data?.message);
+        return { success: false };
+      }
+      setUserData(data?.user);
+      writeSession(data?.user);
+      return { success: true };
+    };
+    
 
+    const validateToken = async () => {
+      const response = await fetch(`${APP_BACKEND_URL}/topic-group/validate-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ token })
+      });
+      if (!response.ok) {
+        setErrorMessage("Provided token is not valid" as any);
+        return { success: false };
+      }
+      const data = await response.json();
+      if (!data?.success) {
+        setErrorMessage(data?.message);
+        return { success: false };
+      }
+      setUserData(data?.user);
+      writeSession(data?.user);
+      // Remove token from the URL so a refresh doesn't revalidate an expired token
+      try {
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+        params.delete('token');
+        url.search = params.toString();
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+      return { success: true };
+    };
+
+    const run = async () => {
+      try {
+        let result = { success: false } as any;
+        if (token && roomId) {
+          // Store token in Redux for signaling connection
+          dispatch(permissionsActions.setToken(token));
+          result = await validateToken();
+          if (customInterval) clearInterval(customInterval);
+        } else if (existingSession && roomId && !token && !topicId && !userKey) {
+          // Allow same-tab refresh without revalidating a short-lived token
+          setUserData(existingSession.user);
+          result = { success: true } as any;
+          if (customInterval) clearInterval(customInterval);
+        } else if (roomId && topicId && userKey) {
+          result = await validateLegacy();
+        } else {
+          // nothing to validate, will show invalid
+        }
         setIsUserEligibleValidated(true);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+        return result;
+      } catch (e) {
+        logger.error('Error validating: %o', e);
+        setIsUserEligibleValidated(true);
+        return { success: false };
       }
     };
-    if (roomId && topicId && userKey) {
-      fetchData();
-    } else {
-      setIsUserEligibleValidated(true);
+
+    run();
+    // Only poll for legacy URLs; token flow is one-shot to avoid later expiry errors
+    if (!token && roomId && topicId && userKey) {
+      customInterval = setInterval(run, 10000);
     }
-    customInterval = setInterval(() => {
-      if (roomId && topicId && userKey) {
-        fetchData();
-      } else {
-        setIsUserEligibleValidated(true);
-      }
-    }, 10000);
 
     return () => {
-      if (customInterval) {
-        clearInterval(customInterval);
-      }
+      if (customInterval) clearInterval(customInterval);
     };
-  }, []);
+  }, [token, roomId, topicId, userKey]);
 
   const handleFileDrop = (event: React.DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -151,8 +214,13 @@ const App = (): JSX.Element => {
 
   useEffect(() => {
     if (roomState === "left") {
-      dispatch(roomActions.setState("new"));
-      navigate("/");
+      // Don't navigate to invalid link screen, just close the window
+      window.close();
+      
+      // Fallback for browsers that don't allow window.close()
+      if (!window.closed) {
+        window.location.href = 'about:blank';
+      }
     }
   }, [roomState]);
 
@@ -169,7 +237,7 @@ const App = (): JSX.Element => {
     }
   }, []);
 
-  const isValidUrl = roomId && topicId && userKey;
+  const isValidUrl = (roomId && token) || (roomId && topicId && userKey) || (roomId && !!existingSession);
 
   let name = (userData as any)?.username;
 
