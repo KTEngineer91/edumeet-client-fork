@@ -24,11 +24,11 @@ import InvalidUrlImage from "../public/images/invalid_url.png";
 import ErrorIconImage from "../public/images/error_icon.png";
 import LoadingIconImage from "../public/images/loading_icon.png";
 import { Logger } from "./utils/Logger";
+import edumeetConfig from './utils/edumeetConfig';
 
 type AppParams = {
   id: string;
 };
-const APP_BACKEND_URL = 'http://localhost:3002/api/v1'
 const logger = new Logger('App');
 
 interface SnackbarCloseButtonProps {
@@ -110,9 +110,11 @@ const App = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
+    const MANAGEMENT_BASE = (edumeetConfig.managementUrl || '').replace(/\/+$/, '');
+
     const validateLegacy = async () => {
       const response = await fetch(
-        `${APP_BACKEND_URL}/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
+        `${MANAGEMENT_BASE}/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
         {
           method: "GET",
           headers: { Accept: "application/json" },
@@ -134,7 +136,7 @@ const App = (): JSX.Element => {
     
 
     const validateToken = async () => {
-      const response = await fetch(`${APP_BACKEND_URL}/topic-group/validate-token`, {
+      const response = await fetch(`${MANAGEMENT_BASE}/topic-group/validate-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ token })
