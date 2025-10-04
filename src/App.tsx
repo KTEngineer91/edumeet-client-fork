@@ -114,7 +114,7 @@ const App = (): JSX.Element => {
 
     const validateLegacy = async () => {
       const response = await fetch(
-        `${MANAGEMENT_BASE}/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
+        `${MANAGEMENT_BASE}/api/v1/topic-group/validate-edumeet-room?topicId=${topicId}&userKey=${userKey}&roomId=${roomId}`,
         {
           method: "GET",
           headers: { Accept: "application/json" },
@@ -136,7 +136,7 @@ const App = (): JSX.Element => {
     
 
     const validateToken = async () => {
-      const response = await fetch(`${MANAGEMENT_BASE}/topic-group/validate-token`, {
+      const response = await fetch(`${MANAGEMENT_BASE}/api/v1/topic-group/validate-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ token })
