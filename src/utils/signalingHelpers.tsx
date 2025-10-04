@@ -12,6 +12,7 @@ import edumeetConfig from './edumeetConfig';
 export const getSignalingUrl = (peerId: string, roomId: string, tenantId: string | undefined, token: string | undefined): string => {
 	const hostname = edumeetConfig.serverHostname || window.location.hostname;
 	const port = import.meta.env.PROD ? edumeetConfig.productionPort : edumeetConfig.developmentPort;
+	const websocketPath = (edumeetConfig as any).websocketPath || '';
 
 	let tenantParam = '';
 	let tokenParam = '';
@@ -19,7 +20,7 @@ export const getSignalingUrl = (peerId: string, roomId: string, tenantId: string
 	if (tenantId) tenantParam = `&tenantId=${tenantId}`;
 	if (token) tokenParam = `&token=${token}`;
 
-	return `wss://${hostname}:${port}/?peerId=${peerId}&roomId=${roomId}${tenantParam}${tokenParam}`;
+	return `wss://${hostname}:${port}${websocketPath}/?peerId=${peerId}&roomId=${roomId}${tenantParam}${tokenParam}`;
 };
 
 export class SocketTimeoutError extends Error {
