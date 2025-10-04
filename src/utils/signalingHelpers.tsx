@@ -12,7 +12,7 @@ import edumeetConfig from './edumeetConfig';
 export const getSignalingUrl = (peerId: string, roomId: string, tenantId: string | undefined, token: string | undefined): string => {
 	const hostname = edumeetConfig.serverHostname || window.location.hostname;
 	const port = import.meta.env.PROD ? edumeetConfig.productionPort : edumeetConfig.developmentPort;
-	const websocketPath = (edumeetConfig as any).websocketPath || '';
+	const websocketPath = (edumeetConfig as { websocketPath?: string }).websocketPath || '';
 
 	let tenantParam = '';
 	let tokenParam = '';
