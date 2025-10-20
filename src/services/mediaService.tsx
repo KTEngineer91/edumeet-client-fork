@@ -727,6 +727,7 @@ export class MediaService extends EventEmitter {
 
 	private async receiveRouterRtpCapabilities(routerRtpCapabilities: RtpCapabilities): Promise<Device> {
 		logger.debug('receiveRouterRtpCapabilities()');
+		console.log('🔧 Router RTP capabilities:', routerRtpCapabilities);
 
 		if (!this.mediasoup) {
 			const MediaSoup = await import('mediasoup-client');
@@ -739,6 +740,9 @@ export class MediaService extends EventEmitter {
 		}
 
 		if (!this.mediasoup.loaded) await this.mediasoup.load({ routerRtpCapabilities });
+		
+		console.log('🔧 Device RTP capabilities:', this.mediasoup.rtpCapabilities);
+		console.log('🔧 Device loaded:', this.mediasoup.loaded);
 
 		return this.mediasoup;
 	}

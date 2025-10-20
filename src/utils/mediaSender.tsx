@@ -317,6 +317,8 @@ export class MediaSender extends EventEmitter {
 			muted: this.track?.muted,
 			readyState: this.track?.readyState
 		});
+		console.log('🎬 Selected codec:', this.codec);
+		console.log('🎬 Available codecs:', this.mediaService.mediasoup?.rtpCapabilities.codecs);
 		
 		const producer = await this.mediaService.sendTransport.produce({
 			...producerOptions,
