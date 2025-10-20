@@ -48,7 +48,7 @@ export const connect = (roomId: string): AppThunk<Promise<void>> => async (
 export const joinRoom = (): AppThunk<Promise<void>> => async (
 	dispatch,
 	getState,
-	{ signalingService, mediaService /* , performanceMonitor */ }
+	{ signalingService, mediaService, deviceService /* , performanceMonitor */ }
 ): Promise<void> => {
 	logger.debug('joinRoom()');
 
@@ -81,6 +81,10 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 		dispatch(roomSessionsActions.addMessages({ sessionId, messages: chatHistory }));
 		dispatch(roomSessionsActions.addFiles({ sessionId, files: fileHistory }));
 	});
+
+	// Always initialize device service to ensure devices are available
+	// even when joining with both mic and video off
+	await deviceService.updateMediaDevices();
 
 	if (!getState().me.audioMuted) dispatch(updateMic());
 	if (!getState().me.videoMuted) dispatch(updateWebcam());
@@ -155,7 +159,7 @@ export const removeBreakoutRoom = (sessionId: string): AppThunk<Promise<void>> =
 export const joinBreakoutRoom = (sessionId: string): AppThunk<Promise<void>> => async (
 	dispatch,
 	getState,
-	{ signalingService }
+	{ signalingService, deviceService }
 ): Promise<void> => {
 	logger.debug('joinBreakoutRoom()');
 
@@ -175,6 +179,10 @@ export const joinBreakoutRoom = (sessionId: string): AppThunk<Promise<void>> => 
 			dispatch(roomSessionsActions.addMessages({ sessionId, messages: chatHistory }));
 			dispatch(roomSessionsActions.addFiles({ sessionId, files: fileHistory }));
 		});
+
+		// Always initialize device service to ensure devices are available
+		// even when joining with both mic and video off
+		await deviceService.updateMediaDevices();
 
 		if (!audioMuted) dispatch(updateMic());
 		if (!videoMuted) dispatch(updateWebcam());
