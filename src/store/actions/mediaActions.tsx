@@ -456,7 +456,7 @@ export const updateMic = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThunk<P
 							opusPtime: opusPtime
 						},
 						appData: { source: 'mic' }
-					});
+					}, 'audio/opus');
 				}
 			}
 		} else {
@@ -667,7 +667,7 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 						encodings,
 						codecOptions: { videoGoogleStartBitrate: 1000 },
 						appData: { source: 'webcam' }
-					});
+					}, 'video/vp8');
 					console.log('🎥 Webcam started with simulcast successfully');
 				} else {
 					console.log('🎥 Starting webcam without simulcast');
@@ -675,7 +675,7 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 						track,
 						zeroRtpOnPause: true,
 						appData: { source: 'webcam' }
-					});
+					}, 'video/vp8');
 					console.log('🎥 Webcam started without simulcast successfully');
 				}
 			}
