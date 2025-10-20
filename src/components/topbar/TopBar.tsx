@@ -6,13 +6,13 @@ import { lobbyPeersLengthSelector, roomSessionCreationTimestampSelector, someone
 import edumeetConfig from '../../utils/edumeetConfig';
 import { permissions } from '../../utils/roles';
 import LobbyButton from '../controlbuttons/LobbyButton';
-import LockButton from '../controlbuttons/LockButton';
+// import LockButton from '../controlbuttons/LockButton';
 import FullscreenButton from '../controlbuttons/FullscreenButton';
-import LoginButton from '../controlbuttons/LoginButton';
+// import LoginButton from '../controlbuttons/LoginButton';
 import SettingsButton from '../controlbuttons/SettingsButton';
 import LeaveButton from '../textbuttons/LeaveButton';
 import { formatDuration } from '../../utils/formatDuration';
-import LogoutButton from '../controlbuttons/LogoutButton';
+// import LogoutButton from '../controlbuttons/LogoutButton';
 import RecordIcon from '../recordicon/RecordIcon';
 
 interface TopBarProps {
@@ -71,13 +71,13 @@ const TopBarDiv = styled('div')<TopBarDivProps>(({ theme, gap = 0, grow = 0, mar
 
 const TopBar = ({ fullscreenEnabled, fullscreen, onFullscreen }: TopBarProps): React.JSX.Element => {
 	const logo = useAppSelector((state) => state.room.logo);
-	const canLock = usePermissionSelector(permissions.CHANGE_ROOM_LOCK);
+	// const canLock = usePermissionSelector(permissions.CHANGE_ROOM_LOCK);
 	const canPromote = usePermissionSelector(permissions.PROMOTE_PEER);
-	const loginEnabled = useAppSelector((state) => state.permissions.loginEnabled);
+	// const loginEnabled = useAppSelector((state) => state.permissions.loginEnabled);
 	const lobbyPeersLength = useAppSelector(lobbyPeersLengthSelector);
 	const roomCreationTimestamp = useAppSelector(roomSessionCreationTimestampSelector);
 	const [ meetingDuration, setMeetingDuration ] = useState<number>(0);
-	const loggedIn = useAppSelector((state) => state.permissions.loggedIn);
+	// const loggedIn = useAppSelector((state) => state.permissions.loggedIn);
 	const someoneIsRecording = useAppSelector(someoneIsRecordingSelector);
 
 	useEffect(() => {
@@ -116,9 +116,9 @@ const TopBar = ({ fullscreenEnabled, fullscreen, onFullscreen }: TopBarProps): R
 					{ someoneIsRecording && <RecordIcon color='error' /> }
 					{ fullscreenEnabled && <FullscreenButton type='iconbutton' fullscreen={fullscreen} onClick={onFullscreen} /> }
 					<SettingsButton type='iconbutton' />
-					{ canLock && <LockButton type='iconbutton' /> }
+					{/* { canLock && <LockButton type='iconbutton' /> } */}
 					{ canPromote && lobbyPeersLength > 0 && <LobbyButton type='iconbutton' /> }
-					{ loginEnabled && (loggedIn ? <LogoutButton type='iconbutton' /> : <LoginButton type='iconbutton' />) }
+					{/* { loginEnabled && (loggedIn ? <LogoutButton type='iconbutton' /> : <LoginButton type='iconbutton' />) } */}
 				</TopBarDiv>
 				<TopBarDiv marginRight={2}>
 					<StyledChip size='small' label={ formatDuration(meetingDuration) } />
