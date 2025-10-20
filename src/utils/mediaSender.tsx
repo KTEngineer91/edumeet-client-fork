@@ -315,12 +315,6 @@ export class MediaSender extends EventEmitter {
 					console.log('🎬 Transport connected successfully');
 					resolve();
 				});
-
-				this.mediaService.sendTransport!.once('error', (error) => {
-					clearTimeout(timeout);
-					console.error('🎬 Transport connection error:', error);
-					reject(error);
-				});
 			});
 		}
 
