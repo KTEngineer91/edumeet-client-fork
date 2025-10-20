@@ -438,21 +438,40 @@ export const updateMic = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThunk<P
 				// Store the track in mediaService for when connection is available
 				mediaService.previewMicTrack = track;
 				dispatch(meActions.setPreviewMicTrackId(track.id));
-			} else if (mediaService.mediaSenders['mic'].running) {
-				await mediaService.mediaSenders['mic'].replaceTrack(track);
 			} else {
-				await mediaService.mediaSenders['mic'].start({
-					track,
-					zeroRtpOnPause: true,
-					codecOptions: {
-						opusStereo: opusStereo,
-						opusFec: opusFec,
-						opusDtx: opusDtx,
-						opusMaxPlaybackRate: opusMaxPlaybackRate,
-						opusPtime: opusPtime
-					},
-					appData: { source: 'mic' }
-				});
+				// Ensure send transport is connected before producing
+				console.log('🎤 Ensuring send transport is connected...');
+				if (mediaService.sendTransport && (mediaService.sendTransport.connectionState === 'new' || mediaService.sendTransport.connectionState === 'connecting')) {
+					console.log('🎤 Send transport not connected, waiting for connection...');
+					await new Promise<void>((resolve, reject) => {
+						const timeout = setTimeout(() => {
+							reject(new Error('Transport connection timeout'));
+						}, 10000); // 10 second timeout
+						
+						mediaService.sendTransport!.once('connect', () => {
+							clearTimeout(timeout);
+							console.log('🎤 Send transport connected');
+							resolve();
+						});
+					});
+				}
+				
+				if (mediaService.mediaSenders['mic'].running) {
+					await mediaService.mediaSenders['mic'].replaceTrack(track);
+				} else {
+					await mediaService.mediaSenders['mic'].start({
+						track,
+						zeroRtpOnPause: true,
+						codecOptions: {
+							opusStereo: opusStereo,
+							opusFec: opusFec,
+							opusDtx: opusDtx,
+							opusMaxPlaybackRate: opusMaxPlaybackRate,
+							opusPtime: opusPtime
+						},
+						appData: { source: 'mic' }
+					});
+				}
 			}
 		} else {
 			await mediaService.mediaSenders['mic'].track?.applyConstraints({
@@ -638,32 +657,51 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 				// Store the track in mediaService for when connection is available
 				mediaService.previewWebcamTrack = track;
 				dispatch(meActions.setPreviewWebcamTrackId(track.id));
-			} else if (mediaService.mediaSenders['webcam'].running) {
-				console.log('🎥 Replacing existing webcam track');
-				effectsService.stop(mediaService.mediaSenders['webcam'].track?.id);
-
-				await mediaService.mediaSenders['webcam'].replaceTrack(track);
-				console.log('🎥 Webcam track replaced successfully');
-			} else if (config.simulcast) {
-				console.log('🎥 Starting webcam with simulcast');
-				const encodings = getEncodings(width, height);
-	
-				await mediaService.mediaSenders['webcam'].start({
-					track,
-					zeroRtpOnPause: true,
-					encodings,
-					codecOptions: { videoGoogleStartBitrate: 1000 },
-					appData: { source: 'webcam' }
-				});
-				console.log('🎥 Webcam started with simulcast successfully');
 			} else {
-				console.log('🎥 Starting webcam without simulcast');
-				await mediaService.mediaSenders['webcam'].start({
-					track,
-					zeroRtpOnPause: true,
-					appData: { source: 'webcam' }
-				});
-				console.log('🎥 Webcam started without simulcast successfully');
+				// Ensure send transport is connected before producing
+				console.log('🎥 Ensuring send transport is connected...');
+				if (mediaService.sendTransport && (mediaService.sendTransport.connectionState === 'new' || mediaService.sendTransport.connectionState === 'connecting')) {
+					console.log('🎥 Send transport not connected, waiting for connection...');
+					await new Promise<void>((resolve, reject) => {
+						const timeout = setTimeout(() => {
+							reject(new Error('Transport connection timeout'));
+						}, 10000); // 10 second timeout
+						
+						mediaService.sendTransport!.once('connect', () => {
+							clearTimeout(timeout);
+							console.log('🎥 Send transport connected');
+							resolve();
+						});
+					});
+				}
+				
+				if (mediaService.mediaSenders['webcam'].running) {
+					console.log('🎥 Replacing existing webcam track');
+					effectsService.stop(mediaService.mediaSenders['webcam'].track?.id);
+
+					await mediaService.mediaSenders['webcam'].replaceTrack(track);
+					console.log('🎥 Webcam track replaced successfully');
+				} else if (config.simulcast) {
+					console.log('🎥 Starting webcam with simulcast');
+					const encodings = getEncodings(width, height);
+		
+					await mediaService.mediaSenders['webcam'].start({
+						track,
+						zeroRtpOnPause: true,
+						encodings,
+						codecOptions: { videoGoogleStartBitrate: 1000 },
+						appData: { source: 'webcam' }
+					});
+					console.log('🎥 Webcam started with simulcast successfully');
+				} else {
+					console.log('🎥 Starting webcam without simulcast');
+					await mediaService.mediaSenders['webcam'].start({
+						track,
+						zeroRtpOnPause: true,
+						appData: { source: 'webcam' }
+					});
+					console.log('🎥 Webcam started without simulcast successfully');
+				}
 			}
 		} else {
 			await mediaService.mediaSenders['webcam'].track?.applyConstraints({
