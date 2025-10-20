@@ -318,8 +318,15 @@ export class MediaSender extends EventEmitter {
 			});
 		}
 
-		// Transport will connect automatically when we call produce()
-		// The 'connect' event will be fired during the produce() call
+		// Ensure transport is connected before producing
+		if (this.mediaService.sendTransport.connectionState === 'new') {
+			console.log('🎬 Transport not connected, attempting to connect...');
+			
+			// In mediasoup, the transport connects automatically when we call produce()
+			// But we need to handle the case where the connection fails
+			// Let's try to produce and handle any connection errors gracefully
+			console.log('🎬 Will attempt to produce - transport will connect during produce()');
+		}
 
 		const producerOptions = {
 			...this.producerOptions,
@@ -343,9 +350,21 @@ export class MediaSender extends EventEmitter {
 			console.log('🎬 Calling sendTransport.produce()...');
 			console.log('🎬 Transport connection state before produce:', this.mediaService.sendTransport.connectionState);
 			
+			// Try to find a compatible codec
+			const availableCodecs = this.mediaService.mediasoup?.rtpCapabilities.codecs || [];
+			const selectedCodec = availableCodecs.find((c) => c.mimeType.toLowerCase() === this.codec);
+			
+			console.log('🎬 Available codecs:', availableCodecs.map((c) => c.mimeType));
+			console.log('🎬 Selected codec:', this.codec);
+			console.log('🎬 Found codec:', selectedCodec?.mimeType);
+			
+			if (!selectedCodec) {
+				console.warn('🎬 Selected codec not found, using first available codec');
+			}
+			
 			const producer = await this.mediaService.sendTransport.produce({
 				...producerOptions,
-				codec: this.mediaService.mediasoup?.rtpCapabilities.codecs?.find((c) => c.mimeType.toLowerCase() === this.codec)
+				codec: selectedCodec || availableCodecs[0]
 			});
 			
 			console.log('🎬 Producer created successfully:', producer.id);
@@ -382,6 +401,15 @@ export class MediaSender extends EventEmitter {
 				stack: (error as Error).stack
 			});
 			console.error('🎬 Transport state at failure:', this.mediaService.sendTransport?.connectionState);
+			
+			// Check if this is an SDP negotiation error
+			if ((error as Error).message.includes('setRemoteDescription') || 
+				(error as Error).message.includes('Failed to set recv parameters')) {
+				console.error('🎬 SDP negotiation failed - this might be a codec compatibility issue');
+				console.error('🎬 Available codecs:', this.mediaService.mediasoup?.rtpCapabilities.codecs?.map((c) => c.mimeType));
+				console.error('🎬 Requested codec:', this.codec);
+			}
+			
 			throw error;
 		}
 	}
