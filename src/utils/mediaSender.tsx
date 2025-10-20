@@ -295,6 +295,8 @@ export class MediaSender extends EventEmitter {
 
 	private async sfuProduce(): Promise<Producer> {
 		logger.debug('sfuProducer() [options:%o]', this.producerOptions);
+		console.log('🎬 sfuProduce() called - checking transport state');
+		console.log('🎬 Send transport state:', this.mediaService.sendTransport?.connectionState);
 
 		await this.mediaService.transportsReady;
 
@@ -305,6 +307,10 @@ export class MediaSender extends EventEmitter {
 			track: this.track?.clone()
 		};
 
+		console.log('🎬 About to call sendTransport.produce()');
+		console.log('🎬 Send transport connection state:', this.mediaService.sendTransport.connectionState);
+		console.log('🎬 Producer options:', producerOptions);
+		
 		const producer = await this.mediaService.sendTransport.produce({
 			...producerOptions,
 			codec: this.mediaService.mediasoup?.rtpCapabilities.codecs?.find((c) => c.mimeType.toLowerCase() === this.codec)

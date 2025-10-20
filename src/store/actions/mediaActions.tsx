@@ -685,8 +685,10 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 					console.log('🎥 Webcam track replaced successfully');
 				} else if (config.simulcast) {
 					console.log('🎥 Starting webcam with simulcast');
+					console.log('🎥 About to call mediaService.mediaSenders[webcam].start()');
+					console.log('🎥 Send transport state before start:', mediaService.sendTransport?.connectionState);
 					const encodings = getEncodings(width, height);
-		
+
 					await mediaService.mediaSenders['webcam'].start({
 						track,
 						zeroRtpOnPause: true,
