@@ -651,6 +651,8 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			const isConnected = mediaService.sendTransport && mediaService.recvTransport;
 			
 			console.log('🎥 Media service connected:', isConnected);
+			console.log('🎥 Send transport state:', mediaService.sendTransport?.connectionState);
+			console.log('🎥 Recv transport state:', mediaService.recvTransport?.connectionState);
 			
 			if (!isConnected) {
 				console.log('🎥 No media server connection - storing track for later use');
