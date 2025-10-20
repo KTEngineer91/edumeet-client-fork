@@ -302,6 +302,28 @@ export class MediaSender extends EventEmitter {
 
 		if (!this.mediaService.sendTransport) throw new Error('Send transport not ready');
 
+		// Wait for transport to be connected before producing
+		if (this.mediaService.sendTransport.connectionState === 'new') {
+			console.log('🎬 Transport not connected, waiting for connection...');
+			await new Promise<void>((resolve, reject) => {
+				const timeout = setTimeout(() => {
+					reject(new Error('Transport connection timeout'));
+				}, 10000); // 10 second timeout
+
+				this.mediaService.sendTransport!.once('connect', () => {
+					clearTimeout(timeout);
+					console.log('🎬 Transport connected successfully');
+					resolve();
+				});
+
+				this.mediaService.sendTransport!.once('error', (error) => {
+					clearTimeout(timeout);
+					console.error('🎬 Transport connection error:', error);
+					reject(error);
+				});
+			});
+		}
+
 		const producerOptions = {
 			...this.producerOptions,
 			track: this.track?.clone()
@@ -320,34 +342,41 @@ export class MediaSender extends EventEmitter {
 		console.log('🎬 Selected codec:', this.codec);
 		console.log('🎬 Available codecs:', this.mediaService.mediasoup?.rtpCapabilities.codecs);
 		
-		const producer = await this.mediaService.sendTransport.produce({
-			...producerOptions,
-			codec: this.mediaService.mediasoup?.rtpCapabilities.codecs?.find((c) => c.mimeType.toLowerCase() === this.codec)
-		});
+		try {
+			const producer = await this.mediaService.sendTransport.produce({
+				...producerOptions,
+				codec: this.mediaService.mediasoup?.rtpCapabilities.codecs?.find((c) => c.mimeType.toLowerCase() === this.codec)
+			});
+			
+			console.log('🎬 Producer created successfully:', producer.id);
 
-		const pauseListener = () => this.signalingService.notify('pauseProducer', { producerId: producer.id });
-		const resumeListener = () => this.signalingService.notify('resumeProducer', { producerId: producer.id });
+			const pauseListener = () => this.signalingService.notify('pauseProducer', { producerId: producer.id });
+			const resumeListener = () => this.signalingService.notify('resumeProducer', { producerId: producer.id });
 
-		producer.observer.once('close', () => {
-			producer.observer.off('pause', pauseListener);
-			producer.observer.off('resume', resumeListener);
+			producer.observer.once('close', () => {
+				producer.observer.off('pause', pauseListener);
+				producer.observer.off('resume', resumeListener);
 
-			if (!producer.appData.remoteClosed)
-				this.signalingService.notify('closeProducer', { producerId: producer.id });
-		});
+				if (!producer.appData.remoteClosed)
+					this.signalingService.notify('closeProducer', { producerId: producer.id });
+			});
 
-		if (!this.running) {
-			producer.close();
+			if (!this.running) {
+				producer.close();
 
-			throw new Error('Producer not needed');
+				throw new Error('Producer not needed');
+			}
+
+			this.producer = producer;
+
+			producer.observer.on('pause', pauseListener);
+			producer.observer.on('resume', resumeListener);
+
+			return producer;
+		} catch (error) {
+			console.error('🎬 Producer creation failed:', error);
+			throw error;
 		}
-
-		this.producer = producer;
-
-		producer.observer.on('pause', pauseListener);
-		producer.observer.on('resume', resumeListener);
-
-		return producer;
 	}
 
 	private async peerProduce(peerId: string): Promise<PeerProducer> {
