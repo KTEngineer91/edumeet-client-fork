@@ -439,22 +439,8 @@ export const updateMic = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThunk<P
 				mediaService.previewMicTrack = track;
 				dispatch(meActions.setPreviewMicTrackId(track.id));
 			} else {
-				// Ensure send transport is connected before producing
-				console.log('🎤 Ensuring send transport is connected...');
-				if (mediaService.sendTransport && (mediaService.sendTransport.connectionState === 'new' || mediaService.sendTransport.connectionState === 'connecting')) {
-					console.log('🎤 Send transport not connected, waiting for connection...');
-					await new Promise<void>((resolve, reject) => {
-						const timeout = setTimeout(() => {
-							reject(new Error('Transport connection timeout'));
-						}, 10000); // 10 second timeout
-						
-						mediaService.sendTransport!.once('connect', () => {
-							clearTimeout(timeout);
-							console.log('🎤 Send transport connected');
-							resolve();
-						});
-					});
-				}
+				// Transports will connect automatically when producing
+				console.log('🎤 Transports ready, proceeding with media operations');
 				
 				if (mediaService.mediaSenders['mic'].running) {
 					await mediaService.mediaSenders['mic'].replaceTrack(track);
@@ -660,22 +646,8 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 				mediaService.previewWebcamTrack = track;
 				dispatch(meActions.setPreviewWebcamTrackId(track.id));
 			} else {
-				// Ensure send transport is connected before producing
-				console.log('🎥 Ensuring send transport is connected...');
-				if (mediaService.sendTransport && (mediaService.sendTransport.connectionState === 'new' || mediaService.sendTransport.connectionState === 'connecting')) {
-					console.log('🎥 Send transport not connected, waiting for connection...');
-					await new Promise<void>((resolve, reject) => {
-						const timeout = setTimeout(() => {
-							reject(new Error('Transport connection timeout'));
-						}, 10000); // 10 second timeout
-						
-						mediaService.sendTransport!.once('connect', () => {
-							clearTimeout(timeout);
-							console.log('🎥 Send transport connected');
-							resolve();
-						});
-					});
-				}
+				// Transports will connect automatically when producing
+				console.log('🎥 Transports ready, proceeding with media operations');
 				
 				if (mediaService.mediaSenders['webcam'].running) {
 					console.log('🎥 Replacing existing webcam track');

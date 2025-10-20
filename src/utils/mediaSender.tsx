@@ -310,6 +310,13 @@ export class MediaSender extends EventEmitter {
 		console.log('🎬 About to call sendTransport.produce()');
 		console.log('🎬 Send transport connection state:', this.mediaService.sendTransport.connectionState);
 		console.log('🎬 Producer options:', producerOptions);
+		console.log('🎬 Track info:', {
+			id: this.track?.id,
+			kind: this.track?.kind,
+			enabled: this.track?.enabled,
+			muted: this.track?.muted,
+			readyState: this.track?.readyState
+		});
 		
 		const producer = await this.mediaService.sendTransport.produce({
 			...producerOptions,

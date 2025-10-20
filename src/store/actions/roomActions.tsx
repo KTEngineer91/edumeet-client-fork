@@ -86,42 +86,11 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 	// even when joining with both mic and video off
 	await deviceService.updateMediaDevices();
 
-	// Force transport connection even when joining with no media
-	// This prevents WebRTC SDP negotiation issues when enabling media later
-	console.log('🔗 Forcing transport connection...');
+	// Ensure transports are ready for media operations
+	// Transports will connect automatically when first used
+	console.log('🔗 Ensuring transports are ready...');
 	await mediaService.transportsReady;
-	
-	if (mediaService.sendTransport && mediaService.sendTransport.connectionState === 'new') {
-		console.log('🔗 Connecting send transport...');
-		await new Promise<void>((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error('Send transport connection timeout'));
-			}, 10000);
-			
-			mediaService.sendTransport!.once('connect', () => {
-				clearTimeout(timeout);
-				console.log('🔗 Send transport connected');
-				resolve();
-			});
-		});
-	}
-	
-	if (mediaService.recvTransport && mediaService.recvTransport.connectionState === 'new') {
-		console.log('🔗 Connecting recv transport...');
-		await new Promise<void>((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error('Recv transport connection timeout'));
-			}, 10000);
-			
-			mediaService.recvTransport!.once('connect', () => {
-				clearTimeout(timeout);
-				console.log('🔗 Recv transport connected');
-				resolve();
-			});
-		});
-	}
-	
-	console.log('🔗 All transports connected');
+	console.log('🔗 Transports are ready for use');
 
 	if (!getState().me.audioMuted) dispatch(updateMic());
 	if (!getState().me.videoMuted) dispatch(updateWebcam());
