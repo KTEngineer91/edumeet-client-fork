@@ -302,21 +302,24 @@ export class MediaSender extends EventEmitter {
 
 		if (!this.mediaService.sendTransport) throw new Error('Send transport not ready');
 
-		// Wait for transport to be connected before producing
-		if (this.mediaService.sendTransport.connectionState === 'new') {
-			console.log('🎬 Transport not connected, waiting for connection...');
+		// Check if signaling service is connected
+		if (this.signalingService.connections.length === 0) {
+			console.log('🎬 No signaling connections available, waiting...');
 			await new Promise<void>((resolve, reject) => {
 				const timeout = setTimeout(() => {
-					reject(new Error('Transport connection timeout'));
-				}, 10000); // 10 second timeout
+					reject(new Error('Signaling service connection timeout'));
+				}, 10000);
 
-				this.mediaService.sendTransport!.once('connect', () => {
+				this.signalingService.once('connected', () => {
 					clearTimeout(timeout);
-					console.log('🎬 Transport connected successfully');
+					console.log('🎬 Signaling service connected');
 					resolve();
 				});
 			});
 		}
+
+		// Transport will connect automatically when we call produce()
+		// The 'connect' event will be fired during the produce() call
 
 		const producerOptions = {
 			...this.producerOptions,
@@ -337,12 +340,16 @@ export class MediaSender extends EventEmitter {
 		console.log('🎬 Available codecs:', this.mediaService.mediasoup?.rtpCapabilities.codecs);
 		
 		try {
+			console.log('🎬 Calling sendTransport.produce()...');
+			console.log('🎬 Transport connection state before produce:', this.mediaService.sendTransport.connectionState);
+			
 			const producer = await this.mediaService.sendTransport.produce({
 				...producerOptions,
 				codec: this.mediaService.mediasoup?.rtpCapabilities.codecs?.find((c) => c.mimeType.toLowerCase() === this.codec)
 			});
 			
 			console.log('🎬 Producer created successfully:', producer.id);
+			console.log('🎬 Transport connection state after produce:', this.mediaService.sendTransport.connectionState);
 
 			const pauseListener = () => this.signalingService.notify('pauseProducer', { producerId: producer.id });
 			const resumeListener = () => this.signalingService.notify('resumeProducer', { producerId: producer.id });
@@ -369,6 +376,12 @@ export class MediaSender extends EventEmitter {
 			return producer;
 		} catch (error) {
 			console.error('🎬 Producer creation failed:', error);
+			console.error('🎬 Error details:', {
+				name: (error as Error).name,
+				message: (error as Error).message,
+				stack: (error as Error).stack
+			});
+			console.error('🎬 Transport state at failure:', this.mediaService.sendTransport?.connectionState);
 			throw error;
 		}
 	}
