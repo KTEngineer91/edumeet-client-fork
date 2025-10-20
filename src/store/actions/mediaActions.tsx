@@ -533,6 +533,7 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 	{ mediaService, deviceService, effectsService, config }
 ) => {
 	logger.debug('updateWebcam [newDeviceId:%s]', newDeviceId);
+	console.log('🎥 updateWebcam called - starting camera initialization');
 
 	dispatch(meActions.setVideoInProgress(true));
 
@@ -543,6 +544,8 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 
 	try {
 		const canSendWebcam = getState().me.canSendWebcam;
+
+		console.log('🎥 canSendWebcam:', canSendWebcam);
 
 		if (!canSendWebcam) throw new Error('cannot produce video');
 		if (newDeviceId) dispatch(settingsActions.setSelectedVideoDevice(newDeviceId));
@@ -555,14 +558,24 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			blurEnabled,
 		} = getState().settings;
 		
+		// Always initialize device service to ensure devices are available
+		// even when joining with both mic and video off
+		console.log('🎥 Initializing device service...');
+		await deviceService.updateMediaDevices();
+		console.log('🎥 Device service initialized');
+		
 		const deviceId = deviceService.getDeviceId(selectedVideoDevice, 'videoinput');
+
+		console.log('🎥 Selected device ID:', deviceId);
 
 		if (!deviceId) logger.warn('no webcam devices');
 
 		if (start || replace) {
+			console.log('🎥 Starting camera - start:', start, 'replace:', replace);
 			if (start) track = mediaService.previewWebcamTrack;
 
 			if (!track) {
+				console.log('🎥 Requesting camera access...');
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: {
 						deviceId: { ideal: deviceId },
@@ -570,8 +583,11 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 						frameRate
 					}
 				});
+
+				console.log('🎥 Camera access granted, stream:', stream);
 	
 				([ track ] = stream.getVideoTracks());
+				console.log('🎥 Video track obtained:', track);
 			}
 
 			if (!track) throw new Error('no webcam track');
@@ -593,10 +609,13 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			dispatch(settingsActions.setSelectedVideoDevice(trackDeviceId));
 
 			if (mediaService.mediaSenders['webcam'].running) {
+				console.log('🎥 Replacing existing webcam track');
 				effectsService.stop(mediaService.mediaSenders['webcam'].track?.id);
 
 				await mediaService.mediaSenders['webcam'].replaceTrack(track);
+				console.log('🎥 Webcam track replaced successfully');
 			} else if (config.simulcast) {
+				console.log('🎥 Starting webcam with simulcast');
 				const encodings = getEncodings(width, height);
 	
 				await mediaService.mediaSenders['webcam'].start({
@@ -606,12 +625,15 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 					codecOptions: { videoGoogleStartBitrate: 1000 },
 					appData: { source: 'webcam' }
 				});
+				console.log('🎥 Webcam started with simulcast successfully');
 			} else {
+				console.log('🎥 Starting webcam without simulcast');
 				await mediaService.mediaSenders['webcam'].start({
 					track,
 					zeroRtpOnPause: true,
 					appData: { source: 'webcam' }
 				});
+				console.log('🎥 Webcam started without simulcast successfully');
 			}
 		} else {
 			await mediaService.mediaSenders['webcam'].track?.applyConstraints({
@@ -625,12 +647,21 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			});
 		}
 
+		console.log('🎥 Camera setup completed successfully');
 		dispatch(meActions.setVideoMuted(false));
 		dispatch(meActions.setWebcamEnabled(true));
+		console.log('🎥 Camera state updated - enabled: true, muted: false');
 	} catch (error) {
+		console.error('🎥 Camera setup failed:', error);
 		logger.error('updateWebcam() [error:%o]', error);
+		
+		// Reset webcam state on error to allow retry
+		dispatch(meActions.setWebcamEnabled(false));
+		dispatch(meActions.setVideoMuted(true));
+		console.log('🎥 Camera state reset due to error');
 	} finally {
 		dispatch(meActions.setVideoInProgress(false));
+		console.log('🎥 Video in progress set to false');
 	}
 };
 
