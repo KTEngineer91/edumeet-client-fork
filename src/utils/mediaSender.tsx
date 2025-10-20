@@ -318,15 +318,9 @@ export class MediaSender extends EventEmitter {
 			});
 		}
 
-		// Ensure transport is connected before producing
-		if (this.mediaService.sendTransport.connectionState === 'new') {
-			console.log('🎬 Transport not connected, attempting to connect...');
-			
-			// In mediasoup, the transport connects automatically when we call produce()
-			// But we need to handle the case where the connection fails
-			// Let's try to produce and handle any connection errors gracefully
-			console.log('🎬 Will attempt to produce - transport will connect during produce()');
-		}
+		// Transport will connect automatically when we call produce()
+		// The 'connect' event will be fired during the produce() call
+		console.log('🎬 Transport connection state:', this.mediaService.sendTransport.connectionState);
 
 		const producerOptions = {
 			...this.producerOptions,
@@ -357,15 +351,29 @@ export class MediaSender extends EventEmitter {
 			console.log('🎬 Available codecs:', availableCodecs.map((c) => c.mimeType));
 			console.log('🎬 Selected codec:', this.codec);
 			console.log('🎬 Found codec:', selectedCodec?.mimeType);
+			console.log('🎬 Codec details:', selectedCodec);
 			
-			if (!selectedCodec) {
-				console.warn('🎬 Selected codec not found, using first available codec');
+			let producer;
+			
+			try {
+				// Try without specifying a codec first - let mediasoup choose
+				console.log('🎬 Attempting produce without explicit codec selection...');
+				producer = await this.mediaService.sendTransport.produce(producerOptions);
+			} catch (firstError) {
+				console.warn('🎬 First produce attempt failed, trying with explicit codec...');
+				console.warn('🎬 First error:', (firstError as Error).message);
+				
+				if (!selectedCodec) {
+					console.warn('🎬 Selected codec not found, using first available codec');
+					console.log('🎬 First available codec:', availableCodecs[0]);
+				}
+				
+				// Try with explicit codec selection
+				producer = await this.mediaService.sendTransport.produce({
+					...producerOptions,
+					codec: selectedCodec || availableCodecs[0]
+				});
 			}
-			
-			const producer = await this.mediaService.sendTransport.produce({
-				...producerOptions,
-				codec: selectedCodec || availableCodecs[0]
-			});
 			
 			console.log('🎬 Producer created successfully:', producer.id);
 			console.log('🎬 Transport connection state after produce:', this.mediaService.sendTransport.connectionState);
