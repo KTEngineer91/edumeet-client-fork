@@ -423,7 +423,22 @@ export const updateMic = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThunk<P
 
 			dispatch(settingsActions.setSelectedAudioDevice(trackDeviceId));
 
-			if (mediaService.mediaSenders['mic'].running) {
+			// Ensure transports are ready before attempting media operations
+			console.log('🎤 Waiting for transports to be ready...');
+			await mediaService.transportsReady;
+			console.log('🎤 Transports are ready');
+
+			// Check if we're connected to a media server
+			const isConnected = mediaService.sendTransport && mediaService.recvTransport;
+			
+			console.log('🎤 Media service connected:', isConnected);
+			
+			if (!isConnected) {
+				console.log('🎤 No media server connection - storing track for later use');
+				// Store the track in mediaService for when connection is available
+				mediaService.previewMicTrack = track;
+				dispatch(meActions.setPreviewMicTrackId(track.id));
+			} else if (mediaService.mediaSenders['mic'].running) {
 				await mediaService.mediaSenders['mic'].replaceTrack(track);
 			} else {
 				await mediaService.mediaSenders['mic'].start({
@@ -608,7 +623,22 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			// so we need to update the selected device in the settings just in case
 			dispatch(settingsActions.setSelectedVideoDevice(trackDeviceId));
 
-			if (mediaService.mediaSenders['webcam'].running) {
+			// Ensure transports are ready before attempting media operations
+			console.log('🎥 Waiting for transports to be ready...');
+			await mediaService.transportsReady;
+			console.log('🎥 Transports are ready');
+
+			// Check if we're connected to a media server
+			const isConnected = mediaService.sendTransport && mediaService.recvTransport;
+			
+			console.log('🎥 Media service connected:', isConnected);
+			
+			if (!isConnected) {
+				console.log('🎥 No media server connection - storing track for later use');
+				// Store the track in mediaService for when connection is available
+				mediaService.previewWebcamTrack = track;
+				dispatch(meActions.setPreviewWebcamTrackId(track.id));
+			} else if (mediaService.mediaSenders['webcam'].running) {
 				console.log('🎥 Replacing existing webcam track');
 				effectsService.stop(mediaService.mediaSenders['webcam'].track?.id);
 
