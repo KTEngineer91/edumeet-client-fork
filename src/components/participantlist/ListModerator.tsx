@@ -1,9 +1,9 @@
 import { styled } from '@mui/material';
 import { memo } from 'react';
-import CloseMeetingButton from '../textbuttons/CloseMeetingButton';
-import MuteAllButton from '../textbuttons/MuteAllButton';
-import StopAllScreenshareButton from '../textbuttons/StopAllScreenshareButton';
-import StopAllVideoButton from '../textbuttons/StopAllVideoButton';
+// import CloseMeetingButton from '../textbuttons/CloseMeetingButton';
+// import MuteAllButton from '../textbuttons/MuteAllButton';
+// import StopAllScreenshareButton from '../textbuttons/StopAllScreenshareButton';
+// import StopAllVideoButton from '../textbuttons/StopAllVideoButton';
 
 const ModeratorDiv = styled('div')(({ theme }) => ({
 	// width: '100%',
@@ -17,10 +17,10 @@ const ModeratorDiv = styled('div')(({ theme }) => ({
 const ListModerator = (): JSX.Element => {
 	return (
 		<ModeratorDiv>
-			<CloseMeetingButton />
-			<MuteAllButton />
-			<StopAllVideoButton />
-			<StopAllScreenshareButton />
+			{/* <CloseMeetingButton /> */}
+			{/* <MuteAllButton /> */}
+			{/* <StopAllVideoButton /> */}
+			{/* <StopAllScreenshareButton /> */}
 		</ModeratorDiv>
 	);
 };
