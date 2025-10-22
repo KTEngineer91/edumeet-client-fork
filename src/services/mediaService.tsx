@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import type { Device } from 'mediasoup-client';
+import type { Device } from 'mediasoup-client/lib/Device';
 import { Device as PeerDevice } from 'ortc-p2p/src/Device';
 import type { Consumer as PeerConsumer } from 'ortc-p2p/src/Consumer';
 import type { Transport as PeerTransport } from 'ortc-p2p/src/Transport';
