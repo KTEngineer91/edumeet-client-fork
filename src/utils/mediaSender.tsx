@@ -373,42 +373,14 @@ export class MediaSender extends EventEmitter {
 				throw new Error('Track is not live, cannot produce');
 			}
 			
-			// CRITICAL FIX: Ensure transport is connected before producing
-			// This is the key difference between initial join (works) vs dynamic enable (fails)
-			if (this.mediaService.sendTransport.connectionState === 'new') {
-				console.log('🎬 Transport not connected, waiting for connection...');
-				
-				// Wait for transport to be connected before producing
-				// This ensures the same state as during initial join
-				await new Promise<void>((resolve, reject) => {
-					const timeout = setTimeout(() => {
-						reject(new Error('Transport connection timeout'));
-					}, 10000);
-					
-					const checkConnection = () => {
-						if (!this.mediaService.sendTransport) {
-							clearTimeout(timeout);
-							reject(new Error('Transport not available'));
-							
-							return;
-						}
-						
-						if (this.mediaService.sendTransport.connectionState === 'connected') {
-							clearTimeout(timeout);
-							console.log('🎬 Transport connected successfully');
-							resolve();
-						} else if (this.mediaService.sendTransport.connectionState === 'failed') {
-							clearTimeout(timeout);
-							reject(new Error('Transport connection failed'));
-						} else {
-							// Check again in 100ms
-							setTimeout(checkConnection, 100);
-						}
-					};
-					
-					checkConnection();
-				});
+			// CRITICAL FIX: Ensure transport is in valid state before producing
+			// The transport connection happens automatically during produce()
+			// We just need to ensure it's not in a failed state
+			if (this.mediaService.sendTransport.connectionState === 'failed') {
+				throw new Error('Transport connection has failed');
 			}
+			
+			console.log('🎬 Transport state is valid for production:', this.mediaService.sendTransport.connectionState);
 			
 			// Try to produce with the current track
 			// Use basic producer options without complex parameters
@@ -417,8 +389,9 @@ export class MediaSender extends EventEmitter {
 				appData: this.producerOptions.appData || {}
 			};
 			
-			// Remove all complex options that might cause SDP negotiation issues
-			console.log('🎬 Producer options (simplified):', finalProducerOptions);
+			// CRITICAL: Disable simulcast and complex encodings to avoid SDP issues
+			// The server might not support complex encoding parameters
+			console.log('🎬 Producer options (no simulcast):', finalProducerOptions);
 			
 			const producer = await this.mediaService.sendTransport.produce(finalProducerOptions);
 			

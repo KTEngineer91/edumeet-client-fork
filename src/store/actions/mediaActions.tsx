@@ -550,7 +550,7 @@ export const updateVideoSettings = (settings: VideoSettings = {}): AppThunk<Prom
 export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThunk<Promise<void>> => async (
 	dispatch,
 	getState,
-	{ mediaService, deviceService, effectsService, config }
+	{ mediaService, deviceService, effectsService }
 ) => {
 	logger.debug('updateWebcam [newDeviceId:%s]', newDeviceId);
 	console.log('🎥 updateWebcam called - starting camera initialization');
@@ -617,7 +617,7 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			const isPreview = track === mediaService.previewWebcamTrack;
 			const inputTrack = effectsService.effectTracks.get(track.id)?.inputTrack;
 
-			const { deviceId: trackDeviceId, width, height } = inputTrack?.getSettings() ?? track.getSettings();
+			const { deviceId: trackDeviceId } = inputTrack?.getSettings() ?? track.getSettings();
 
 			if (blurEnabled && !inputTrack) track = await effectsService.applyEffect(track);
 
@@ -655,28 +655,19 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 
 					await mediaService.mediaSenders['webcam'].replaceTrack(track);
 					console.log('🎥 Webcam track replaced successfully');
-				} else if (config.simulcast) {
-					console.log('🎥 Starting webcam with simulcast');
+				} else {
+					// CRITICAL FIX: Always disable simulcast to avoid SDP negotiation issues
+					// The server's mediasoup configuration doesn't support complex encoding parameters
+					console.log('🎥 Starting webcam without simulcast (SDP fix)');
 					console.log('🎥 About to call mediaService.mediaSenders[webcam].start()');
 					console.log('🎥 Send transport state before start:', mediaService.sendTransport?.connectionState);
-					const encodings = getEncodings(width, height);
 
 					await mediaService.mediaSenders['webcam'].start({
 						track,
 						zeroRtpOnPause: true,
-						encodings,
-						codecOptions: { videoGoogleStartBitrate: 1000 },
 						appData: { source: 'webcam' }
 					}, 'video/vp8');
-					console.log('🎥 Webcam started with simulcast successfully');
-				} else {
-					console.log('🎥 Starting webcam without simulcast');
-					await mediaService.mediaSenders['webcam'].start({
-						track,
-						zeroRtpOnPause: true,
-						appData: { source: 'webcam' }
-					}, 'video/vp8');
-					console.log('🎥 Webcam started without simulcast successfully');
+					console.log('🎥 Webcam started successfully (simulcast disabled for compatibility)');
 				}
 			}
 		} else {
