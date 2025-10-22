@@ -748,16 +748,30 @@ export class MediaService extends EventEmitter {
 	}
 
 	public async createTransports(): Promise<void> {
-		await this.mediaReady;
-		
-		this.sendTransport = await this.createTransport('createSendTransport');
-		this.recvTransport = await this.createTransport('createRecvTransport');
+		try {
+			await this.mediaReady;
+			
+			console.log('🔗 Creating send transport...');
+			this.sendTransport = await this.createTransport('createSendTransport');
+			console.log('🔗 Send transport created successfully');
+			
+			console.log('🔗 Creating recv transport...');
+			this.recvTransport = await this.createTransport('createRecvTransport');
+			console.log('🔗 Recv transport created successfully');
 
-		this.resolveTransportsReady();
+			console.log('🔗 All transports created, resolving transportsReady');
+			this.resolveTransportsReady();
+		} catch (error) {
+			console.error('🔗 Error creating transports:', error);
+			this.rejectTransportsReady(error as Error);
+		}
 	}
 
 	private async createTransport(creator: 'createSendTransport' | 'createRecvTransport'): Promise<Transport> {
 		if (!this.mediasoup) throw new Error('mediasoup not initialized');
+
+		console.log(`🔗 Creating ${creator}...`);
+		console.log('🔗 SCTP capabilities:', this.mediasoup.sctpCapabilities);
 
 		const {
 			id,
@@ -771,6 +785,8 @@ export class MediaService extends EventEmitter {
 			consuming: creator === 'createRecvTransport',
 			sctpCapabilities: this.mediasoup.sctpCapabilities,
 		});
+
+		console.log(`🔗 Received transport data for ${creator}:`, { id, iceParameters, iceCandidates, dtlsParameters, sctpParameters });
 
 		const transport = this.mediasoup[creator]({
 			id,
