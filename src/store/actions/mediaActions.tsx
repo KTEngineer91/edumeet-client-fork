@@ -635,10 +635,21 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 
 			// Check if we're connected to a media server
 			const isConnected = mediaService.sendTransport && mediaService.recvTransport;
+			const transportState = mediaService.sendTransport?.connectionState;
 			
 			console.log('🎥 Media service connected:', isConnected);
-			console.log('🎥 Send transport state:', mediaService.sendTransport?.connectionState);
+			console.log('🎥 Send transport state:', transportState);
 			console.log('🎥 Recv transport state:', mediaService.recvTransport?.connectionState);
+			
+			// CRITICAL FIX: If transports exist but aren't connected, recreate them
+			// This ensures the same state as during initial join
+			if (!isConnected || transportState === 'new') {
+				console.log('🎥 Transports not properly connected, recreating...');
+				
+				// Recreate transports to ensure they're in the same state as initial join
+				await mediaService.createTransports();
+				console.log('🎥 Transports recreated successfully');
+			}
 			
 			if (!isConnected) {
 				console.log('🎥 No media server connection - storing track for later use');
