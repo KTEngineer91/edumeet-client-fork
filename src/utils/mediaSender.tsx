@@ -351,46 +351,17 @@ export class MediaSender extends EventEmitter {
 			console.log('🎬 Calling sendTransport.produce()...');
 			console.log('🎬 Transport connection state before produce:', this.mediaService.sendTransport.connectionState);
 			
-			// Try to find a compatible codec
-			const availableCodecs = this.mediaService.mediasoup?.rtpCapabilities.codecs || [];
-			const selectedCodec = availableCodecs.find((c) => c.mimeType.toLowerCase() === this.codec);
-			
-			console.log('🎬 Available codecs:', availableCodecs.map((c) => c.mimeType));
-			console.log('🎬 Selected codec:', this.codec);
-			console.log('🎬 Found codec:', selectedCodec?.mimeType);
-			console.log('🎬 Codec details:', selectedCodec);
-			
-			let producer;
-			
 			// Check if track is still valid before attempting to produce
 			if (this.track && this.track.readyState === 'ended') {
 				throw new Error('Track has ended, cannot produce');
 			}
 			
-			try {
-				// Try without specifying a codec first - let mediasoup choose
-				console.log('🎬 Attempting produce without explicit codec selection...');
-				producer = await this.mediaService.sendTransport.produce(producerOptions);
-			} catch (firstError) {
-				console.warn('🎬 First produce attempt failed, trying with explicit codec...');
-				console.warn('🎬 First error:', (firstError as Error).message);
-				
-				// Check if track is still valid before retry
-				if (this.track && this.track.readyState === 'ended') {
-					throw new Error('Track ended during first attempt, cannot retry');
-				}
-				
-				if (!selectedCodec) {
-					console.warn('🎬 Selected codec not found, using first available codec');
-					console.log('🎬 First available codec:', availableCodecs[0]);
-				}
-				
-				// Try with explicit codec selection
-				producer = await this.mediaService.sendTransport.produce({
-					...producerOptions,
-					codec: selectedCodec || availableCodecs[0]
-				});
-			}
+			// The core issue is SDP negotiation failure
+			// Let's try a different approach - ensure we have a fresh track
+			console.log('🎬 Track readyState before produce:', this.track?.readyState);
+			
+			// Try to produce with the current track
+			const producer = await this.mediaService.sendTransport.produce(producerOptions);
 			
 			console.log('🎬 Producer created successfully:', producer.id);
 			console.log('🎬 Transport connection state after produce:', this.mediaService.sendTransport.connectionState);
@@ -426,13 +397,21 @@ export class MediaSender extends EventEmitter {
 				stack: (error as Error).stack
 			});
 			console.error('🎬 Transport state at failure:', this.mediaService.sendTransport?.connectionState);
+			console.error('🎬 Track state at failure:', this.track?.readyState);
 			
 			// Check if this is an SDP negotiation error
 			if ((error as Error).message.includes('setRemoteDescription') || 
-				(error as Error).message.includes('Failed to set recv parameters')) {
-				console.error('🎬 SDP negotiation failed - this might be a codec compatibility issue');
+				(error as Error).message.includes('Failed to set recv parameters') ||
+				(error as Error).message.includes('createOffer')) {
+				console.error('🎬 SDP negotiation failed - this indicates a transport/server compatibility issue');
 				console.error('🎬 Available codecs:', this.mediaService.mediasoup?.rtpCapabilities.codecs?.map((c) => c.mimeType));
 				console.error('🎬 Requested codec:', this.codec);
+				console.error('🎬 This might be a server-side configuration issue or network problem');
+			}
+			
+			// Check if track ended during the process
+			if ((error as Error).message.includes('track ended')) {
+				console.error('🎬 Track ended during produce - this suggests the SDP failure caused the track to end');
 			}
 			
 			throw error;
