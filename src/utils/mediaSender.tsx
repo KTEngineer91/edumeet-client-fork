@@ -386,6 +386,7 @@ export class MediaSender extends EventEmitter {
 			// Use absolutely minimal producer options - just the track
 			// CRITICAL: Use minimal options to avoid any SDP negotiation issues
 			console.log('🎬 Using absolutely minimal producer options - track only');
+			console.log('🎬 About to call mediasoup transport.produce() with options:', { track: this.track });
 		
 			const producer = await this.mediaService.sendTransport.produce({
 				track: this.track

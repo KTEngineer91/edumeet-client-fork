@@ -237,15 +237,22 @@ export class MediaService extends EventEmitter {
 			try {
 				switch (request.method) {
 					case 'mediaConfiguration': {
+						console.log('🔧 Processing mediaConfiguration request...');
 						const { routerRtpCapabilities, iceServers } = request.data;
 
 						this.iceServers = iceServers;
+						console.log('🔧 ICE servers set:', this.iceServers);
 
+						console.log('🔧 Calling receiveRouterRtpCapabilities...');
 						const { rtpCapabilities, sctpCapabilities } = await this.receiveRouterRtpCapabilities(routerRtpCapabilities);
+						console.log('🔧 receiveRouterRtpCapabilities completed successfully');
 
 						respond({ rtpCapabilities, sctpCapabilities });
+						console.log('🔧 Response sent to server');
 
+						console.log('🔧 Resolving mediaReady promise...');
 						this.resolveMediaReady();
+						console.log('🔧 mediaReady promise resolved');
 
 						break;
 					}
@@ -730,6 +737,7 @@ export class MediaService extends EventEmitter {
 		console.log('🔧 Router RTP capabilities:', routerRtpCapabilities);
 
 		if (!this.mediasoup) {
+			console.log('🔧 Creating new mediasoup device...');
 			const MediaSoup = await import('mediasoup-client');
 
 			this.mediasoup = new MediaSoup.Device();
@@ -737,9 +745,14 @@ export class MediaService extends EventEmitter {
 			const monitor = await this.monitor;
 
 			monitor.collectors.addMediasoupDevice(this.mediasoup);
+			console.log('🔧 Mediasoup device created');
 		}
 
-		if (!this.mediasoup.loaded) await this.mediasoup.load({ routerRtpCapabilities });
+		if (!this.mediasoup.loaded) {
+			console.log('🔧 Loading device with router capabilities...');
+			await this.mediasoup.load({ routerRtpCapabilities });
+			console.log('🔧 Device loaded:', this.mediasoup.loaded);
+		}
 		
 		console.log('🔧 Device RTP capabilities:', this.mediasoup.rtpCapabilities);
 		console.log('🔧 Device loaded:', this.mediasoup.loaded);
