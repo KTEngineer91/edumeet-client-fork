@@ -340,6 +340,13 @@ export class MediaSender extends EventEmitter {
 		console.log('🎬 Selected codec:', this.codec);
 		console.log('🎬 Available codecs:', this.mediaService.mediasoup?.rtpCapabilities.codecs);
 		
+		// Add track state monitoring
+		if (this.track) {
+			this.track.addEventListener('ended', () => {
+				console.warn('🎬 Track ended event fired!');
+			}, { once: true });
+		}
+		
 		try {
 			console.log('🎬 Calling sendTransport.produce()...');
 			console.log('🎬 Transport connection state before produce:', this.mediaService.sendTransport.connectionState);
@@ -355,6 +362,11 @@ export class MediaSender extends EventEmitter {
 			
 			let producer;
 			
+			// Check if track is still valid before attempting to produce
+			if (this.track && this.track.readyState === 'ended') {
+				throw new Error('Track has ended, cannot produce');
+			}
+			
 			try {
 				// Try without specifying a codec first - let mediasoup choose
 				console.log('🎬 Attempting produce without explicit codec selection...');
@@ -362,6 +374,11 @@ export class MediaSender extends EventEmitter {
 			} catch (firstError) {
 				console.warn('🎬 First produce attempt failed, trying with explicit codec...');
 				console.warn('🎬 First error:', (firstError as Error).message);
+				
+				// Check if track is still valid before retry
+				if (this.track && this.track.readyState === 'ended') {
+					throw new Error('Track ended during first attempt, cannot retry');
+				}
 				
 				if (!selectedCodec) {
 					console.warn('🎬 Selected codec not found, using first available codec');
