@@ -318,13 +318,48 @@ export class MediaSender extends EventEmitter {
 			});
 		}
 
-		// Transport will connect automatically when we call produce()
-		// The 'connect' event will be fired during the produce() call
+		// CRITICAL FIX: Wait for transport to be connected before producing
 		console.log('🎬 Transport connection state:', this.mediaService.sendTransport.connectionState);
+		
+		if (this.mediaService.sendTransport.connectionState === 'new') {
+			console.log('🎬 Transport is in "new" state, waiting for connection...');
+			
+			// Wait for transport to connect
+			await new Promise<void>((resolve, reject) => {
+				const timeout = setTimeout(() => {
+					reject(new Error('Transport connection timeout'));
+				}, 15000); // 15 second timeout
+				
+				const checkConnection = () => {
+					if (this.mediaService.sendTransport?.connectionState === 'connected') {
+						clearTimeout(timeout);
+						console.log('🎬 Transport is now connected');
+						resolve();
+					} else if (this.mediaService.sendTransport?.connectionState === 'failed') {
+						clearTimeout(timeout);
+						reject(new Error('Transport connection failed'));
+					} else {
+						// Still connecting, wait a bit more
+						setTimeout(checkConnection, 100);
+					}
+				};
+				
+				checkConnection();
+			});
+		}
+
+		// Ensure track is still valid and not ended
+		if (!this.track) {
+			throw new Error('Track is not available');
+		}
+		
+		if (this.track.readyState !== 'live') {
+			throw new Error('Track is not live');
+		}
 
 		const producerOptions = {
 			...this.producerOptions,
-			track: this.track?.clone()
+			track: this.track // Use original track, not cloned
 		};
 
 		console.log('🎬 About to call sendTransport.produce()');
@@ -352,8 +387,8 @@ export class MediaSender extends EventEmitter {
 			console.log('🎬 Transport connection state before produce:', this.mediaService.sendTransport.connectionState);
 			
 			// Check if track is still valid before attempting to produce
-			if (this.track && this.track.readyState === 'ended') {
-				throw new Error('Track has ended, cannot produce');
+			if (this.track && this.track.readyState !== 'live') {
+				throw new Error('Track is not live, cannot produce');
 			}
 			
 			// The core issue is SDP negotiation failure
@@ -428,9 +463,13 @@ export class MediaSender extends EventEmitter {
 				const peerDevice = this.mediaService.getPeerDevice(peerId);
 				const transport = await this.mediaService.getPeerTransport(peerId, 'send');
 
+				if (!this.track) {
+					throw new Error('Track is not available for peer produce');
+				}
+				
 				const producerOptions = {
 					...this.producerOptions,
-					track: this.track?.clone()
+					track: this.track // Use original track, not cloned
 				};
 		
 				const producer = await transport.produce({
