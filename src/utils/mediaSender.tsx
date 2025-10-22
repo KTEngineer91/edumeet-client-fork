@@ -318,35 +318,16 @@ export class MediaSender extends EventEmitter {
 			});
 		}
 
-		// CRITICAL FIX: Wait for transport to be connected before producing
+		// CRITICAL FIX: Ensure transport is ready for production
 		console.log('🎬 Transport connection state:', this.mediaService.sendTransport.connectionState);
 		
-		if (this.mediaService.sendTransport.connectionState === 'new') {
-			console.log('🎬 Transport is in "new" state, waiting for connection...');
-			
-			// Wait for transport to connect
-			await new Promise<void>((resolve, reject) => {
-				const timeout = setTimeout(() => {
-					reject(new Error('Transport connection timeout'));
-				}, 15000); // 15 second timeout
-				
-				const checkConnection = () => {
-					if (this.mediaService.sendTransport?.connectionState === 'connected') {
-						clearTimeout(timeout);
-						console.log('🎬 Transport is now connected');
-						resolve();
-					} else if (this.mediaService.sendTransport?.connectionState === 'failed') {
-						clearTimeout(timeout);
-						reject(new Error('Transport connection failed'));
-					} else {
-						// Still connecting, wait a bit more
-						setTimeout(checkConnection, 100);
-					}
-				};
-				
-				checkConnection();
-			});
+		// In mediasoup, transport connection happens automatically during produce()
+		// We just need to ensure the transport is in a valid state
+		if (this.mediaService.sendTransport.connectionState === 'failed') {
+			throw new Error('Transport connection has failed');
 		}
+		
+		console.log('🎬 Transport is ready for production');
 
 		// Ensure track is still valid and not ended
 		if (!this.track) {
@@ -385,15 +366,12 @@ export class MediaSender extends EventEmitter {
 		try {
 			console.log('🎬 Calling sendTransport.produce()...');
 			console.log('🎬 Transport connection state before produce:', this.mediaService.sendTransport.connectionState);
+			console.log('🎬 Track readyState before produce:', this.track?.readyState);
 			
 			// Check if track is still valid before attempting to produce
 			if (this.track && this.track.readyState !== 'live') {
 				throw new Error('Track is not live, cannot produce');
 			}
-			
-			// The core issue is SDP negotiation failure
-			// Let's try a different approach - ensure we have a fresh track
-			console.log('🎬 Track readyState before produce:', this.track?.readyState);
 			
 			// Try to produce with the current track
 			const producer = await this.mediaService.sendTransport.produce(producerOptions);
@@ -414,7 +392,6 @@ export class MediaSender extends EventEmitter {
 
 			if (!this.running) {
 				producer.close();
-
 				throw new Error('Producer not needed');
 			}
 
