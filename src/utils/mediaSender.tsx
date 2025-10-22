@@ -384,15 +384,12 @@ export class MediaSender extends EventEmitter {
 			
 			// Try to produce with the current track
 			// Use absolutely minimal producer options - just the track
-			const finalProducerOptions = {
-				track: this.track
-			};
-			
 			// CRITICAL: Use minimal options to avoid any SDP negotiation issues
-			// Remove all optional parameters that might cause server incompatibility
-			console.log('🎬 Producer options (minimal):', finalProducerOptions);
-			
-			const producer = await this.mediaService.sendTransport.produce(finalProducerOptions);
+			console.log('🎬 Using absolutely minimal producer options - track only');
+		
+			const producer = await this.mediaService.sendTransport.produce({
+				track: this.track
+			});
 			
 			console.log('🎬 Producer created successfully:', producer.id);
 			console.log('🎬 Transport connection state after produce:', this.mediaService.sendTransport.connectionState);
