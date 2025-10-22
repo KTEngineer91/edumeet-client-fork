@@ -376,22 +376,21 @@ export class MediaSender extends EventEmitter {
 			// CRITICAL FIX: Ensure transport is in valid state before producing
 			// The transport connection happens automatically during produce()
 			// We just need to ensure it's not in a failed state
-			if (this.mediaService.sendTransport.connectionState === 'failed') {
+			if (this.mediaService.sendTransport.connectionState === 'disconnected') {
 				throw new Error('Transport connection has failed');
 			}
 			
 			console.log('🎬 Transport state is valid for production:', this.mediaService.sendTransport.connectionState);
 			
 			// Try to produce with the current track
-			// Use basic producer options without complex parameters
+			// Use absolutely minimal producer options - just the track
 			const finalProducerOptions = {
-				track: this.track,
-				appData: this.producerOptions.appData || {}
+				track: this.track
 			};
 			
-			// CRITICAL: Disable simulcast and complex encodings to avoid SDP issues
-			// The server might not support complex encoding parameters
-			console.log('🎬 Producer options (no simulcast):', finalProducerOptions);
+			// CRITICAL: Use minimal options to avoid any SDP negotiation issues
+			// Remove all optional parameters that might cause server incompatibility
+			console.log('🎬 Producer options (minimal):', finalProducerOptions);
 			
 			const producer = await this.mediaService.sendTransport.produce(finalProducerOptions);
 			
@@ -462,10 +461,9 @@ export class MediaSender extends EventEmitter {
 					throw new Error('Track is not available for peer produce');
 				}
 				
-				// Use basic producer options without complex parameters
+				// Use absolutely minimal producer options - just the track
 				const produceOptions = {
-					track: this.track,
-					appData: this.producerOptions.appData || {}
+					track: this.track
 				};
 				
 				const producer = await transport.produce(produceOptions);

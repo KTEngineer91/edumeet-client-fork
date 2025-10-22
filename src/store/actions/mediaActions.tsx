@@ -663,10 +663,8 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 					console.log('🎥 Send transport state before start:', mediaService.sendTransport?.connectionState);
 
 					await mediaService.mediaSenders['webcam'].start({
-						track,
-						zeroRtpOnPause: true,
-						appData: { source: 'webcam' }
-					}, 'video/vp8');
+						track
+					});
 					console.log('🎥 Webcam started successfully (simulcast disabled for compatibility)');
 				}
 			}
