@@ -641,14 +641,12 @@ export const updateWebcam = ({ newDeviceId }: UpdateDeviceOptions = {}): AppThun
 			console.log('🎥 Send transport state:', transportState);
 			console.log('🎥 Recv transport state:', mediaService.recvTransport?.connectionState);
 			
-			// CRITICAL FIX: If transports exist but aren't connected, recreate them
-			// This ensures the same state as during initial join
-			if (!isConnected || transportState === 'new') {
-				console.log('🎥 Transports not properly connected, recreating...');
-				
-				// Recreate transports to ensure they're in the same state as initial join
-				await mediaService.createTransports();
-				console.log('🎥 Transports recreated successfully');
+			// CRITICAL FIX: Ensure transports are in the right state for production
+			// During initial join, transports are fresh and ready
+			// During dynamic enable, we need to ensure they're in the same state
+			if (transportState === 'new') {
+				console.log('🎥 Transport is in new state - this is expected for dynamic enable');
+				console.log('🎥 Transport will connect automatically during produce()');
 			}
 			
 			if (!isConnected) {
