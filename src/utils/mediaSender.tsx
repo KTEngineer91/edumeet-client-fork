@@ -374,7 +374,16 @@ export class MediaSender extends EventEmitter {
 			}
 			
 			// Try to produce with the current track
-			const producer = await this.mediaService.sendTransport.produce(producerOptions);
+			// Use basic producer options without complex parameters
+			const finalProducerOptions = {
+				track: this.track,
+				appData: this.producerOptions.appData || {}
+			};
+			
+			// Remove all complex options that might cause SDP negotiation issues
+			console.log('🎬 Producer options (simplified):', finalProducerOptions);
+			
+			const producer = await this.mediaService.sendTransport.produce(finalProducerOptions);
 			
 			console.log('🎬 Producer created successfully:', producer.id);
 			console.log('🎬 Transport connection state after produce:', this.mediaService.sendTransport.connectionState);
@@ -437,22 +446,19 @@ export class MediaSender extends EventEmitter {
 
 		if (!peerProducingPromise) {
 			peerProducingPromise = (async () => {
-				const peerDevice = this.mediaService.getPeerDevice(peerId);
 				const transport = await this.mediaService.getPeerTransport(peerId, 'send');
 
 				if (!this.track) {
 					throw new Error('Track is not available for peer produce');
 				}
 				
-				const producerOptions = {
-					...this.producerOptions,
-					track: this.track // Use original track, not cloned
+				// Use basic producer options without complex parameters
+				const produceOptions = {
+					track: this.track,
+					appData: this.producerOptions.appData || {}
 				};
-		
-				const producer = await transport.produce({
-					...producerOptions,
-					codec: peerDevice.rtpCapabilities.codecs?.find((c) => c.mimeType.toLowerCase() === this.codec)
-				});
+				
+				const producer = await transport.produce(produceOptions);
 
 				const pauseListener = () => this.signalingService.notify('peerPauseProducer', { producerId: producer.id, peerId });
 				const resumeListener = () => this.signalingService.notify('peerResumeProducer', { producerId: producer.id, peerId });
