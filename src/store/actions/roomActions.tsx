@@ -99,13 +99,19 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 			);
 		}
 
-		dispatch(drawing.isEnabled ? 
-			drawingActions.enableDrawing() : 
-			drawingActions.disableDrawing()
-		);
+		if (drawing) {
+			dispatch(drawing.isEnabled ? 
+				drawingActions.enableDrawing() : 
+				drawingActions.disableDrawing()
+			);
 
-		dispatch(drawingActions.setDrawingBgColor(drawing.bgColor));
-		dispatch(drawingActions.InitiateCanvas(drawing.canvasState));
+			if (drawing.bgColor) {
+				dispatch(drawingActions.setDrawingBgColor(drawing.bgColor));
+			}
+			if (drawing.canvasState) {
+				dispatch(drawingActions.InitiateCanvas(drawing.canvasState));
+			}
+		}
 	});
 	
 	// Preserve muted state before starting tracks to prevent false muting during transition
