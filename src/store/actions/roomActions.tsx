@@ -4,6 +4,7 @@ import { meActions } from '../slices/meSlice';
 import { peersActions } from '../slices/peersSlice';
 import { permissionsActions } from '../slices/permissionsSlice';
 import { roomActions } from '../slices/roomSlice';
+import { drawingActions } from '../slices/drawingSlice';
 import { signalingActions } from '../slices/signalingSlice';
 import { AppThunk, fileService } from '../store';
 import { updateMic, updateWebcam } from './mediaActions';
@@ -11,6 +12,7 @@ import { initialRoomSession, roomSessionsActions } from '../slices/roomSessionsS
 import { getSignalingUrl } from '../../utils/signalingHelpers';
 import { getTenantFromFqdn } from './managementActions';
 import { Logger } from '../../utils/Logger';
+import { stopListeners } from './startActions';
 
 const logger = new Logger('RoomActions');
 
@@ -60,8 +62,11 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 	const {
 		peers,
 		tracker,
+		maxFileSize,
 		chatHistory,
 		fileHistory,
+		countdownTimer,
+		drawing,
 		breakoutRooms,
 		locked,
 		lobbyPeers,
@@ -71,17 +76,36 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 	});
 
 	fileService.tracker = tracker;
-	fileService.iceServers = mediaService.iceServers;
+	if (maxFileSize)
+		fileService.maxFileSize = maxFileSize;
+	
+	// this does nothing 
+	// fileService.iceServers = mediaService.iceServers; 
 
 	batch(() => {
+		
 		dispatch(permissionsActions.setLocked(Boolean(locked)));
 		dispatch(roomSessionsActions.addRoomSessions(breakoutRooms));
 		dispatch(peersActions.addPeers(peers));
 		dispatch(lobbyPeersActions.addPeers(lobbyPeers));
 		dispatch(roomSessionsActions.addMessages({ sessionId, messages: chatHistory }));
 		dispatch(roomSessionsActions.addFiles({ sessionId, files: fileHistory }));
-	});
+		dispatch(roomActions.joinCountdownTimer(countdownTimer));
 
+		dispatch(countdownTimer.isStarted ? 
+			roomActions.startCountdownTimer() : 
+			roomActions.stopCountdownTimer()
+		);
+
+		dispatch(drawing.isEnabled ? 
+			drawingActions.enableDrawing() : 
+			drawingActions.disableDrawing()
+		);
+
+		dispatch(drawingActions.setDrawingBgColor(drawing.bgColor));
+		dispatch(drawingActions.InitiateCanvas(drawing.canvasState));
+	});
+	
 	if (!getState().me.audioMuted) dispatch(updateMic());
 	if (!getState().me.videoMuted) dispatch(updateWebcam());
 };
@@ -90,7 +114,7 @@ export const leaveRoom = (): AppThunk<Promise<void>> => async (
 	dispatch
 ): Promise<void> => {
 	logger.debug('leaveRoom()');
-
+	dispatch(stopListeners());
 	dispatch(signalingActions.disconnect());
 };
 
@@ -165,6 +189,8 @@ export const joinBreakoutRoom = (sessionId: string): AppThunk<Promise<void>> => 
 		const audioMuted = getState().me.audioMuted;
 		const videoMuted = getState().me.videoMuted;
 
+		logger.debug('joinBreakoutRoom:', audioMuted, videoMuted);
+
 		const {
 			chatHistory,
 			fileHistory,
@@ -200,6 +226,34 @@ export const leaveBreakoutRoom = (): AppThunk<Promise<void>> => async (
 		dispatch(meActions.setSessionId(sessionId));
 	} catch (error) {
 		logger.error('leaveBreakoutRoom() [error:%o]', error);
+	} finally {
+		dispatch(roomActions.updateRoom({ transitBreakoutRoomInProgress: false }));
+	}
+};
+
+export const moveToBreakoutRoom = (peerId: string, sessionId: string, oldSessionId: string): AppThunk<Promise<void>> => async (
+	dispatch,
+	_getState,
+	{ signalingService }
+): Promise<void> => {
+	logger.debug('moveToBreakoutRoom()');
+
+	dispatch(roomActions.updateRoom({ transitBreakoutRoomInProgress: true }));
+
+	try {
+		const {
+			chatHistory,
+			fileHistory,
+		} = await signalingService.sendRequest('moveToBreakoutRoom', { roomSessionId: sessionId, roomPeerId: peerId });
+
+		batch(() => {
+			dispatch(peersActions.setPeerSessionId({ id: peerId, sessionId, oldSessionId }));
+			dispatch(roomSessionsActions.addMessages({ sessionId, messages: chatHistory }));
+			dispatch(roomSessionsActions.addFiles({ sessionId, files: fileHistory }));
+		});
+
+	} catch (error) {
+		logger.error('moveToBreakoutRoom() [error:%o]', error);
 	} finally {
 		dispatch(roomActions.updateRoom({ transitBreakoutRoomInProgress: false }));
 	}

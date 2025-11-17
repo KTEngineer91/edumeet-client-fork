@@ -12,11 +12,13 @@ import { VolumeWatcher } from '../utils/volumeWatcher';
 import type { DataConsumer } from 'mediasoup-client/lib/DataConsumer';
 import type { DataProducer, DataProducerOptions } from 'mediasoup-client/lib/DataProducer';
 import { ResolutionWatcher } from '../utils/resolutionWatcher';
+import { ClientMonitor } from '@observertc/client-monitor-js';
 import { safePromise } from '../utils/safePromise';
 import { ProducerSource } from '../utils/types';
 import { MediaSender } from '../utils/mediaSender';
-import type { ClientMonitor } from '@observertc/client-monitor-js';
 import { Logger } from '../utils/Logger';
+import edumeetConfig from '../utils/edumeetConfig';
+import { fileService } from '../store/store';
 
 const logger = new Logger('MediaService');
 
@@ -134,26 +136,19 @@ export class MediaService extends EventEmitter {
 	public resolveTransportsReady!: () => void;
 	public transportsReady!: ReturnType<typeof safePromise>;
 
-	public monitor: Promise<ClientMonitor> = (async () => {
+	public _monitor: Promise<ClientMonitor> = (async () => {
 		const { createClientMonitor } = await import('@observertc/client-monitor-js');
-		const { ClientSampleEncoder, schemaVersion } = await import('@observertc/samples-encoder');
 
-		const sampleEncoder = new ClientSampleEncoder();
 		const monitor = createClientMonitor({ collectingPeriodInMs: 5000 });
-
-		monitor.on('sample-created', ({ clientSample }) => {
-			const encodedSample = sampleEncoder.encodeToBase64(clientSample);
-
-			this.signalingService.notify('clientSample', {
-				schemaVersion,
-				encodedSample,
-			});
-		});
 
 		return monitor;
 	})();
 
-	constructor({ signalingService }: { signalingService: SignalingService }) {
+	constructor(
+		{ signalingService }: { signalingService: SignalingService },
+		// eslint-disable-next-line no-unused-vars
+		public readonly monitor?: ClientMonitor,		
+	) {
 		super();
 
 		this.signalingService = signalingService;
@@ -240,6 +235,8 @@ export class MediaService extends EventEmitter {
 						const { routerRtpCapabilities, iceServers } = request.data;
 
 						this.iceServers = iceServers;
+
+						fileService.iceServers = iceServers;
 
 						const { rtpCapabilities, sctpCapabilities } = await this.receiveRouterRtpCapabilities(routerRtpCapabilities);
 
@@ -665,7 +662,7 @@ export class MediaService extends EventEmitter {
 	get localCapabilities(): LocalCapabilities {
 		return {
 			canRecord: Boolean(MediaRecorder),
-			canTranscribe: Boolean(window.webkitSpeechRecognition),
+			canTranscribe: Boolean(window.webkitSpeechRecognition) && edumeetConfig.transcriptionEnabled,
 		};
 	}
 
@@ -735,7 +732,8 @@ export class MediaService extends EventEmitter {
 
 			const monitor = await this.monitor;
 
-			monitor.collectors.addMediasoupDevice(this.mediasoup);
+			if (monitor)
+				monitor.collectors.addMediasoupDevice(this.mediasoup);
 		}
 
 		if (!this.mediasoup.loaded) await this.mediasoup.load({ routerRtpCapabilities });
@@ -867,8 +865,9 @@ export class MediaService extends EventEmitter {
 				}
 
 				const monitor = await this.monitor;
-
-				monitor.collectors.addRTCPeerConnection(transport.handler.pc);
+				
+				if (monitor)
+					monitor.collectors.addRTCPeerConnection(transport.handler.pc);
 
 				transport.on('icecandidate', (candidate) => {
 					this.signalingService.notify('candidate', {

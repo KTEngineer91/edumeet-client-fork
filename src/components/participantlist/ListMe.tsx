@@ -8,6 +8,7 @@ import RaiseHandButton from '../controlbuttons/RaiseHandButton';
 import { meLabel } from '../translated/translatedComponents';
 import { useEffect, useState } from 'react';
 import { setDisplayName } from '../../store/actions/meActions';
+import { isMobileSelector } from '../../store/selectors';
 
 const StyledTextField = styled(TextField)(() => ({
 	flexGrow: 1,
@@ -46,6 +47,7 @@ const MeAvatar = styled('img')({
 });
 
 const ListMe = (): JSX.Element => {
+	const isMobile = useAppSelector(isMobileSelector);
 	const raiseHandEnabled = useAppSelector((state) => state.room.raiseHandEnabled);
 	const picture = useAppSelector((state) => state.me.picture);
 	const displayName = useAppSelector((state) => state.settings.displayName);
@@ -67,7 +69,7 @@ const ListMe = (): JSX.Element => {
 
 	return (
 		<MeDiv>
-			<MeAvatar src={picture ?? '/images/buddy.svg'} />
+			<MeAvatar src={picture?.trim() || '/images/buddy.svg'} />
 			{ isEditing ?
 				<StyledTextField
 					value={`${prefix}${value}`}
@@ -90,7 +92,7 @@ const ListMe = (): JSX.Element => {
 				</MeInfoDiv>
 			}
 			<EscapeMeetingButton type='iconbutton' size='small' />
-			{ raiseHandEnabled && <RaiseHandButton type='iconbutton' size='small' /> }
+			{ isMobile && raiseHandEnabled && <RaiseHandButton type='iconbutton' size='small' /> }
 		</MeDiv>
 	);
 };

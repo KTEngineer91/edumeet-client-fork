@@ -28,16 +28,20 @@ import createPeerMiddleware from './middlewares/peerMiddleware';
 import createPermissionsMiddleware from './middlewares/permissionsMiddleware';
 import createChatMiddleware from './middlewares/chatMiddleware';
 import createNotificationMiddleware from './middlewares/notificationMiddleware';
+import createCountdownTimerMiddleware from './middlewares/countdownTimerMiddleware';
+import createDrawingMiddleware from './middlewares/drawingMiddleware';
 import roomSlice from './slices/roomSlice';
 import meSlice from './slices/meSlice';
 import consumersSlice from './slices/consumersSlice';
 import signalingSlice from './slices/signalingSlice';
 import permissionsSlice from './slices/permissionsSlice';
+import managementSlice from './slices/managementSlice';
 import lobbyPeersSlice from './slices/lobbyPeersSlice';
 import settingsSlice from './slices/settingsSlice';
 import peersSlice from './slices/peersSlice';
 import notificationsSlice from './slices/notificationsSlice';
 import uiSlice from './slices/uiSlice';
+import drawingSlice from './slices/drawingSlice';
 import { EdumeetConfig } from '../utils/types';
 import edumeetConfig from '../utils/edumeetConfig';
 import { createContext } from 'react';
@@ -46,7 +50,9 @@ import { FileService } from '../services/fileService';
 import roomSessionsSlice from './slices/roomSessionsSlice';
 import type { Application } from '@feathersjs/feathers/lib';
 import { EffectsService } from '../services/effectsService';
+import { createClientMonitor } from '@observertc/client-monitor-js';
 import createEffectsMiddleware from './middlewares/effectsMiddleware';
+import { ClientImageService } from '../services/clientImageService';
 
 declare global {
 	interface Window {
@@ -63,6 +69,7 @@ export interface MiddlewareOptions {
 	mediaService: MediaService;
 	effectsService: EffectsService;
 	fileService: FileService;
+	clientImageService: ClientImageService;
 	deviceService: DeviceService;
 	signalingService: SignalingService;
 	managementService: Promise<Application>;
@@ -75,7 +82,7 @@ const persistConfig = {
 	stateReconciler: autoMergeLevel2,
 	whitelist: [ 'settings' ]
 };
-
+const monitor = edumeetConfig.clientMontitor ? createClientMonitor(edumeetConfig.clientMontitor) : undefined;
 const signalingService = new SignalingService();
 const deviceService = new DeviceService();
 const managementService = (async () => {
@@ -88,8 +95,9 @@ const managementService = (async () => {
 		.configure(authentication());
 })() as Promise<Application>;
 
-export const mediaService = new MediaService({ signalingService });
+export const mediaService = new MediaService({ signalingService }, monitor);
 export const fileService = new FileService();
+export const clientImageService = new ClientImageService();
 const effectsService = new EffectsService();
 
 /**
@@ -107,6 +115,7 @@ const middlewareOptions = {
 	config: edumeetConfig,
 	mediaService,
 	fileService,
+	clientImageService,
 	deviceService,
 	signalingService,
 	managementService,
@@ -120,11 +129,13 @@ const reducer = combineReducers({
 	me: meSlice.reducer,
 	peers: peersSlice.reducer,
 	permissions: permissionsSlice.reducer,
+	management: managementSlice.reducer,
 	room: roomSlice.reducer,
 	roomSessions: roomSessionsSlice.reducer,
 	settings: settingsSlice.reducer,
 	signaling: signalingSlice.reducer,
 	ui: uiSlice.reducer,
+	drawing: drawingSlice.reducer
 });
 
 const pReducer = persistReducer<RootState>(persistConfig, reducer);
@@ -149,6 +160,8 @@ export const store = configureStore({
 			createRoomMiddleware(middlewareOptions),
 			createNotificationMiddleware(middlewareOptions),
 			createEffectsMiddleware(middlewareOptions),
+			createCountdownTimerMiddleware(middlewareOptions),
+			createDrawingMiddleware(middlewareOptions),
 			...(edumeetConfig.reduxLoggingEnabled ? [ createLogger({
 				duration: true,
 				timestamp: false,

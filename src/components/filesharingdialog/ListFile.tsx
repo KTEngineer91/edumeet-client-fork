@@ -1,11 +1,11 @@
-import { Button, LinearProgress, styled } from '@mui/material';
+import { Button, ButtonGroup, LinearProgress, styled, Typography } from '@mui/material';
 import { saveAs } from 'file-saver';
 import { useContext, useEffect, useState } from 'react';
-import WebTorrent, { TorrentFile } from 'webtorrent';
 import { useAppDispatch } from '../../store/hooks';
 import { notificationsActions } from '../../store/slices/notificationsSlice';
 import { ServiceContext } from '../../store/store';
 import {
+	deleteLabel,
 	downloadFileLabel,
 	meLabel,
 	saveFileErrorLabel,
@@ -13,6 +13,8 @@ import {
 } from '../translated/translatedComponents';
 import { FilesharingFile } from '../../utils/types';
 import { roomSessionsActions } from '../../store/slices/roomSessionsSlice';
+import { LocalTorrentFile, LocalWebTorrent } from '../../services/fileService';
+import { clearFile } from '../../store/actions/filesharingActions';
 
 interface ListFilerProps {
 	file: FilesharingFile;
@@ -38,7 +40,7 @@ const ListFile = ({
 }: ListFilerProps): JSX.Element => {
 	const { fileService } = useContext(ServiceContext);
 	const dispatch = useAppDispatch();
-	const [ torrent, setTorrent ] = useState<WebTorrent.Torrent | undefined>();
+	const [ torrent, setTorrent ] = useState<LocalWebTorrent | undefined>();
 	const [ done, setDone ] = useState<boolean>(false);
 	const [ progress, setProgress ] = useState<number>(0);
 	const [ startInProgress, setStartInProgress ] = useState<boolean>(false);
@@ -46,11 +48,15 @@ const ListFile = ({
 	useEffect(() => {
 		if (file.started || isMe) {
 			(async () => {
-				const torrentFile = await fileService.getTorrent(file.magnetURI);
+				if (!torrent) {
+					const torrentFile = await fileService.getTorrent(file.magnetURI) as LocalWebTorrent;
 
-				setTorrent(torrentFile);
-				setDone(isMe || Boolean(torrentFile?.done));
-				setProgress(torrentFile?.progress || 0);
+					if (torrentFile) {
+						setTorrent(torrentFile);
+						setDone(isMe || Boolean(torrentFile?.done));
+						setProgress(torrentFile?.progress || 0);
+					}
+				}
 			})();
 		}
 	}, []);
@@ -58,8 +64,9 @@ const ListFile = ({
 	useEffect(() => {
 		if (torrent) {
 			torrent.on('download', () => {
-				if (torrent.progress > progress)
-					setProgress(torrent.progress || 0);
+				setProgress(torrent.downloaded / torrent.length || 0);
+				if (torrent.downloaded === torrent.length)
+					setDone(true);
 			});
 			torrent.on('done', () => setDone(true));
 
@@ -74,68 +81,131 @@ const ListFile = ({
 
 	const startTorrent = async (): Promise<void> => {
 		setStartInProgress(true);
-
+		dispatch(roomSessionsActions.updateFile({ ...file, started: true }));
 		const newTorrent = await fileService.downloadFile(file.magnetURI);
 
 		setTorrent(newTorrent);
-		dispatch(roomSessionsActions.updateFile({ ...file, started: true }));
 		setStartInProgress(false);
 	};
 
-	const saveSubFile = (saveFile: TorrentFile): void => {
-		saveFile.getBlob((err, blob) => {
-			if (err)
-				return dispatch(notificationsActions.enqueueNotification({
-					message: saveFileErrorLabel(),
-					options: { variant: 'error' }
-				}));
+	const saveSubFile = async (saveFile: LocalTorrentFile): Promise<void> => {
+		try {
+			saveAs(await saveFile.blob(), saveFile.name);
+		} catch (error) {
+			dispatch(notificationsActions.enqueueNotification({
+				message: saveFileErrorLabel(),
+				options: { variant: 'error' }
+			}));
+		}
+	};
 
-			if (blob)
-				saveAs(blob, saveFile.name);
-		});
+	const handleClearFile = (): void => {
+		const magnetURI = file.magnetURI;
+
+		dispatch(clearFile(magnetURI));
+	};
+
+	const handleClearFileLocaly = (): void => {
+		const magnetURI = file.magnetURI;
+
+		fileService.removeFile(magnetURI);
+		setDone(false);
+		setProgress(0);
+		dispatch(roomSessionsActions.updateFile({ ...file, started: false }));
 	};
 
 	return (
 		<FileDiv>
-			{ file.started || isMe ?
-				torrent?.files.map((subFile, index) => (
+			{ file?.started || isMe ?
+				torrent?.files?.map((subFile, index) => (
 					<FileDiv key={index}>
 						<FileInfoDiv>
-							({ isMe ? meLabel() : file.displayName }) { subFile.name }
-							{ done && !isMe &&
+							<Typography noWrap={false}
+								sx={{
+									whiteSpace: 'normal', // allow breaking
+									overflowWrap: 'break-word', // break long words
+									wordBreak: 'break-word', // fallback
+									lineHeight: 1.2,
+								}}>({ isMe ? meLabel() : file.displayName }) { subFile.name }</Typography>
+							<ButtonGroup variant="contained" aria-label="Basic button group">
+								{ done && isMe &&
+								<Button
+									aria-label={deleteLabel()}
+									variant='contained'
+									color='error'
+									onClick={handleClearFile}
+									size='small'
+								>
+									{ deleteLabel() }
+								</Button>
+								}
+								{ done && !isMe &&
 								<Button
 									aria-label={saveFileLabel()}
 									variant='contained'
-									onClick={() => saveSubFile(subFile)}
+									onClick={() => saveSubFile(subFile as LocalTorrentFile)}
 									size='small'
 								>
 									{ saveFileLabel() }
 								</Button>
-							}
+								}
+								{ done && !isMe &&
+								<Button
+									aria-label={deleteLabel()}
+									variant='contained'
+									color='warning'
+									onClick={handleClearFileLocaly}
+									size='small'
+								>
+									{ deleteLabel() }
+								</Button>
+								}
+							</ButtonGroup>
 						</FileInfoDiv>
 					</FileDiv>
 				))
 				:
 				<FileInfoDiv>
-					{ file.displayName }
+					<Typography noWrap={false}
+						sx={{
+							whiteSpace: 'normal', // allow breaking
+							overflowWrap: 'break-word', // break long words
+							wordBreak: 'break-word', // fallback
+							lineHeight: 1.2,
+						}}>
+						{ file.displayName }: { new URLSearchParams(file.magnetURI.slice(8)).get('dn') }
+					</Typography>
+
 					{ !file.started &&
-						<Button
-							aria-label={downloadFileLabel()}
-							variant='contained'
-							onClick={startTorrent}
-							disabled={startInProgress}
-							size='small'
-						>
-							{ downloadFileLabel() }
-						</Button>
+						<ButtonGroup variant="contained" aria-label="Basic button group">
+							<Button
+								aria-label={downloadFileLabel()}
+								variant='contained'
+								onClick={startTorrent}
+								disabled={startInProgress}
+								size='small'
+							>
+								{ downloadFileLabel() }
+							</Button>
+						</ButtonGroup>
 					}
 				</FileInfoDiv>
 			}
 			{ file.started && !done &&
-				<LinearProgress
-					variant='determinate'
-					value={progress * 100}
-				/>
+				<>
+					<LinearProgress
+						variant='determinate'
+						value={progress * 100} />
+					<div>{ Math.round(progress * 100) }%</div>
+					<Button
+						aria-label={deleteLabel()}
+						variant='contained'
+						onClick={handleClearFileLocaly}
+						size='small'
+					>
+						{ deleteLabel() }
+					</Button>
+				</>
 			}
 		</FileDiv>
 	);
