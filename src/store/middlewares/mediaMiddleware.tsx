@@ -110,23 +110,36 @@ const createMediaMiddleware = ({
 
 				mediaService.on('mediaClosed', (source) => {
 					logger.debug('mediaClosed() [source:%s]', source);
+					const state = getState();
 
 					if (source === 'webcam') {
-						if (!mediaService.mediaSenders['webcam'].paused) {
+						// Only mute if sender is running and not paused, and we're not in the process of starting
+						if (mediaService.mediaSenders['webcam'].running && 
+							!mediaService.mediaSenders['webcam'].paused &&
+							!state.me.videoInProgress) {
 							dispatch(meActions.setLostVideo(true));
 							dispatch(meActions.setVideoMuted(true));
 						}
 
-						dispatch(meActions.setWebcamEnabled(false));
+						// Only disable if sender is not running (not transitioning from preview)
+						if (!mediaService.mediaSenders['webcam'].running) {
+							dispatch(meActions.setWebcamEnabled(false));
+						}
 					}
 
 					if (source === 'mic') {
-						if (!mediaService.mediaSenders['mic'].paused) {
+						// Only mute if sender is running and not paused, and we're not in the process of starting
+						if (mediaService.mediaSenders['mic'].running && 
+							!mediaService.mediaSenders['mic'].paused &&
+							!state.me.audioInProgress) {
 							dispatch(meActions.setLostAudio(true));
 							dispatch(meActions.setAudioMuted(true));
 						}
 
-						dispatch(meActions.setMicEnabled(false));
+						// Only disable if sender is not running (not transitioning from preview)
+						if (!mediaService.mediaSenders['mic'].running) {
+							dispatch(meActions.setMicEnabled(false));
+						}
 					}
 
 					if (source === 'screen') {
