@@ -106,8 +106,25 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 		dispatch(drawingActions.InitiateCanvas(drawing.canvasState));
 	});
 	
-	if (!getState().me.audioMuted) dispatch(updateMic());
-	if (!getState().me.videoMuted) dispatch(updateWebcam());
+	// Preserve muted state before starting tracks to prevent false muting during transition
+	const audioMutedState = getState().me.audioMuted;
+	const videoMutedState = getState().me.videoMuted;
+	
+	if (!audioMutedState) {
+		try {
+			await dispatch(updateMic());
+		} catch (error) {
+			logger.error('joinRoom() failed to start mic: %o', error);
+		}
+	}
+	
+	if (!videoMutedState) {
+		try {
+			await dispatch(updateWebcam());
+		} catch (error) {
+			logger.error('joinRoom() failed to start webcam: %o', error);
+		}
+	}
 };
 
 export const leaveRoom = (): AppThunk<Promise<void>> => async (
