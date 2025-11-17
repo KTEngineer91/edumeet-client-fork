@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { roomSessionsActions } from './roomSessionsSlice';
 
-export type SettingsTab = 'media' | 'appearance' | 'advanced';
+export type SettingsTab = 'media' | 'appearance' | 'advanced' | 'management';
 
 export interface UiState {
 	fullScreenConsumer?: string;
@@ -13,12 +13,16 @@ export interface UiState {
 	helpOpen: boolean;
 	aboutOpen: boolean;
 	lobbyDialogOpen: boolean;
+	backgroundSelectDialogOpen: boolean;
+	videoBackgroundDialogOpen: boolean;
 	extraVideoDialogOpen: boolean;
 	extraAudioDialogOpen: boolean;
 	currentSettingsTab: SettingsTab;
 	showStats: boolean;
 	chatOpen: boolean;
 	participantListOpen: boolean;
+	drawingOpen: boolean;
+	unseenFiles: number;
 }
 
 type UiUpdate = Partial<Omit<UiState, 'currentSettingsTab'>>;
@@ -32,11 +36,15 @@ const initialState: UiState = {
 	helpOpen: false,
 	aboutOpen: false,
 	lobbyDialogOpen: false,
+	backgroundSelectDialogOpen: false,
+	videoBackgroundDialogOpen: false,
 	extraVideoDialogOpen: false,
 	extraAudioDialogOpen: false,
 	currentSettingsTab: 'media',
 	chatOpen: false,
 	participantListOpen: false,
+	drawingOpen: false,
+	unseenFiles: 0,
 };
 
 const uiSlice = createSlice({
@@ -45,8 +53,9 @@ const uiSlice = createSlice({
 	reducers: {
 		setUi: ((state, action: PayloadAction<UiUpdate>) => {
 			const unreadMessages = action.payload.chatOpen ? 0 : state.unreadMessages;
+			const unseenFiles = action.payload.filesharingOpen ? 0 : state.unseenFiles;
 
-			return { ...state, ...action.payload, unreadMessages };
+			return { ...state, ...action.payload, unreadMessages, unseenFiles };
 		}),
 		setCurrentSettingsTab: ((
 			state,
@@ -60,6 +69,12 @@ const uiSlice = createSlice({
 		resetUnreadMessages: ((state) => {
 			state.unreadMessages = 0;
 		}),
+		addToUnseenFiles: ((state) => {
+			state.unseenFiles += 1;
+		}),
+		resetUnseenFiles: ((state) => {
+			state.unseenFiles = 0;		
+		})
 	},
 	extraReducers: (builder) => {
 		builder

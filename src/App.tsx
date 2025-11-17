@@ -25,6 +25,7 @@ import ErrorIconImage from "../public/images/error_icon.png";
 import LoadingIconImage from "../public/images/loading_icon.png";
 import { Logger } from "./utils/Logger";
 import edumeetConfig from './utils/edumeetConfig';
+import VideoBackgroundDialog from './components/backgroundselectdialog/VideoBackgroundDialog';
 
 type AppParams = {
   id: string;
@@ -266,6 +267,7 @@ const App = (): JSX.Element => {
     ? { ...ErrorData, messageText: errorMessage }
     : null;
   return (
+    <>
     <SnackbarProvider
       action={(snackbarKey: SnackbarKey) => (
         <SnackbarCloseButton snackbarKey={snackbarKey} />
@@ -287,6 +289,8 @@ const App = (): JSX.Element => {
         )}
       </StyledBackground>
     </SnackbarProvider>
+    <VideoBackgroundDialog />
+  </>
   );
 };
 
