@@ -121,8 +121,14 @@ const roomSlice = createSlice({
 			state.countdownTimer.remainingTime = action.payload.remainingTime;
 		}),
 		joinCountdownTimer: ((state, action: PayloadAction<any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-			state.countdownTimer.initialTime = action.payload.initialTime;
-			state.countdownTimer.remainingTime = action.payload.remainingTime;
+			if (action.payload) {
+				if (action.payload.initialTime !== undefined) {
+					state.countdownTimer.initialTime = action.payload.initialTime;
+				}
+				if (action.payload.remainingTime !== undefined) {
+					state.countdownTimer.remainingTime = action.payload.remainingTime;
+				}
+			}
 		}),
 	}
 });

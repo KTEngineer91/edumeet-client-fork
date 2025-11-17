@@ -90,12 +90,14 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 		dispatch(lobbyPeersActions.addPeers(lobbyPeers));
 		dispatch(roomSessionsActions.addMessages({ sessionId, messages: chatHistory }));
 		dispatch(roomSessionsActions.addFiles({ sessionId, files: fileHistory }));
-		dispatch(roomActions.joinCountdownTimer(countdownTimer));
-
-		dispatch(countdownTimer.isStarted ? 
-			roomActions.startCountdownTimer() : 
-			roomActions.stopCountdownTimer()
-		);
+		
+		if (countdownTimer) {
+			dispatch(roomActions.joinCountdownTimer(countdownTimer));
+			dispatch(countdownTimer.isStarted ? 
+				roomActions.startCountdownTimer() : 
+				roomActions.stopCountdownTimer()
+			);
+		}
 
 		dispatch(drawing.isEnabled ? 
 			drawingActions.enableDrawing() : 
@@ -115,6 +117,8 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 			await dispatch(updateMic());
 		} catch (error) {
 			logger.error('joinRoom() failed to start mic: %o', error);
+			// eslint-disable-next-line no-console
+			console.error('joinRoom() failed to start mic:', error);
 		}
 	}
 	
@@ -123,6 +127,8 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 			await dispatch(updateWebcam());
 		} catch (error) {
 			logger.error('joinRoom() failed to start webcam: %o', error);
+			// eslint-disable-next-line no-console
+			console.error('joinRoom() failed to start webcam:', error);
 		}
 	}
 };
