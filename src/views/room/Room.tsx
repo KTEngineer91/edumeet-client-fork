@@ -5,13 +5,17 @@ import TopBar from '../../components/topbar/TopBar';
 import FullscreenVideo from '../../components/fullscreenvideo/FullscreenVideo';
 import WindowedVideo from '../../components/windowedvideo/WindowedVideo';
 import AudioPeers from '../../components/audiopeers/AudioPeers';
+import BackgroundSelectDialog from '../../components/backgroundselectdialog/BackgroundSelectDialog';
 import LobbyDialog from '../../components/lobbydialog/LobbyDialog';
 import FilesharingDialog from '../../components/filesharingdialog/FilesharingDialog';
 import ExtraVideoDialog from '../../components/extravideodialog/ExtraVideoDialog';
 import Help from '../../components/helpdialog/HelpDialog';
 import MainContent from '../../components/maincontent/MainContent';
 import HelpButton from '../../components/controlbuttons/HelpButton';
-import { useNotifier } from '../../store/hooks';
+import { useNotifier, useAppSelector, useAppDispatch } from '../../store/hooks';
+import moment from 'moment';
+
+import { roomActions } from '../../store/slices/roomSlice';
 
 const Room = (): JSX.Element => {
 	useNotifier();
@@ -37,6 +41,30 @@ const Room = (): JSX.Element => {
 
 	const handleFullscreenChange = () => setFullscreen(fscreen.fullscreenElement !== null);
 
+	const remainingTime = useAppSelector((state) => state.room.countdownTimer.remainingTime);
+	const isStarted = useAppSelector((state) => state.room.countdownTimer.isStarted);
+	const dispatch = useAppDispatch();
+
+	useEffect(() => {
+
+		if (isStarted) {
+
+			const _countdownTimerRef = setInterval(() => {
+				let remainingTimeUnix = moment(`1000-01-01 ${remainingTime}`).unix();
+
+				remainingTimeUnix--;
+
+				const remainingTimeString = moment.unix(remainingTimeUnix).format('HH:mm:ss');
+
+				dispatch(roomActions.setCountdownTimerRemainingTime(remainingTimeString));
+
+			}, 1000);
+			
+			return () => { clearInterval(_countdownTimerRef); };
+		}
+
+	}, [ isStarted, remainingTime, dispatch ]);
+
 	return (
 		<>
 			<WindowedVideo />
@@ -48,6 +76,7 @@ const Room = (): JSX.Element => {
 			/>
 			<MainContent />
 			<FullscreenVideo />
+			<BackgroundSelectDialog />
 			<LobbyDialog />
 			<Settings />
 			<Help />

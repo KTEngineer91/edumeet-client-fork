@@ -1,54 +1,45 @@
-import { Grid, Typography } from '@mui/material';
-import { useAppSelector } from '../../store/hooks';
+import Grid from '@mui/material/Grid2';
+import { Typography } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import edumeetConfig from '../../utils/edumeetConfig';
 import LoginButton from '../controlbuttons/LoginButton';
 import { loginLabel, logoutLabel } from '../translated/translatedComponents';
 import LogoutButton from '../controlbuttons/LogoutButton';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { checkJWT, login, logout } from '../../store/actions/permissionsActions';
+import { styled } from '@mui/material/styles';
+
+const ClickableLabel = styled('span')(() => ({
+  cursor: 'pointer',
+}));
 
 const PrecallTitle = (): React.JSX.Element => {
+	const dispatch = useAppDispatch();
+
 	const logo = useAppSelector((state) => state.room.logo);
 	const loginEnabled = useAppSelector((state) => state.permissions.loginEnabled);
 	const loggedIn = useAppSelector((state) => state.permissions.loggedIn);
 
-	return (
-		<Grid
-			container
-			direction='row'
-			justifyContent='space-between'
-			alignItems='center'
-		>
-			<Grid item>
-				{ logo ?
-					<img alt='Logo' src={logo} /> :
-					<Typography variant='h5'> {edumeetConfig.title} </Typography>
-				}
-			</Grid>
+	useEffect(() => {
+		dispatch(checkJWT());
+	}, []);
 
-			<Grid item>
-				<Grid
-					container
-					direction='row'
-					justifyContent='flex-end'
-					alignItems='center'
-				>
-					{ loginEnabled &&
-						<Grid item>
-							<Grid container direction='column' alignItems='center'>
-								<Grid item>
-									{ loggedIn ? <LogoutButton
-										type='iconbutton'
-										toolTipLocation='left'
-									/> : <LoginButton type="iconbutton" toolTipLocation='left' />
-									}
-								</Grid>
-								<Grid item>
-									{ loggedIn ? logoutLabel() : loginLabel() }
-								</Grid>
-							</Grid>
-						</Grid>
-					}
-				</Grid>
+	return (
+		<Grid container spacing={2}>
+			<Grid size={8}>
+				{logo ?
+					<img alt='Logo' src={logo} /> :
+					<Typography variant='h5'> {edumeetConfig.title} </Typography>}
+			</Grid>
+			<Grid size={4} style={{ display: 'flex', justifyContent: 'end' }} >
+				{loginEnabled &&
+					<>
+						{loggedIn ? <LogoutButton
+							type='iconbutton'
+							toolTipLocation='left' /> : <LoginButton type="iconbutton" toolTipLocation='left' />}
+						{loggedIn ? <ClickableLabel onClick={() => dispatch(logout())}>{logoutLabel()}</ClickableLabel> : <ClickableLabel onClick={() => dispatch(login())}>{loginLabel()}</ClickableLabel>}
+					</>
+				}
 			</Grid>
 		</Grid>
 	);

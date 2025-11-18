@@ -3,6 +3,7 @@ import MediaControls from '../../components/mediacontrols/MediaControls';
 import MicButton from '../../components/controlbuttons/MicButton';
 import WebcamButton from '../../components/controlbuttons/WebcamButton';
 import ScreenshareButton from '../../components/controlbuttons/ScreenshareButton';
+import RaiseHandButton from '../controlbuttons/RaiseHandButton';
 import { isMobileSelector } from '../../store/selectors';
 import ParticipantsButton from '../controlbuttons/ParticipantsButton';
 import ChatButton from '../controlbuttons/ChatButton';
@@ -16,6 +17,7 @@ import ExtraVideo from '../menuitems/ExtraVideo';
 import Transcription from '../menuitems/Transcription';
 import Filesharing from '../menuitems/Filesharing';
 import Recording from '../menuitems/Recording';
+import Drawing from '../menuitems/Drawing';
 import MoreButton from '../controlbuttons/MoreButton';
 
 interface ContainerProps {
@@ -36,24 +38,20 @@ const ControlButtonsBar = (): JSX.Element => {
 	const localRecordingEnabled = useAppSelector((state) => state.room.localRecordingEnabled);
 	const canRecord = useAppSelector((state) => state.me.canRecord);
 	const canTranscribe = useAppSelector((state) => state.me.canTranscribe);
+	const drawingEnabled = useAppSelector((state) => state.drawing.drawingEnabled); // eslint-disable-line
+	const raiseHandEnabled = useAppSelector((state) => state.room.raiseHandEnabled);
 
 	const [ participantListAnchorEl, setParticipantAnchorEl ] = useState<HTMLElement | null>();
 	const isParticipantListOpen = Boolean(participantListAnchorEl);
-
 	const handleParticipantListClose = () => setParticipantAnchorEl(null);
 
 	const [ chatAnchorEl, setChatAnchorEl ] = useState<HTMLElement | null>();
 	const isChatOpen = Boolean(chatAnchorEl);
-
 	const handleChatClose = () => setChatAnchorEl(null);
 
 	const [ moreAnchorEl, setMoreAnchorEl ] = useState<HTMLElement | null>();
-
-	const handleMoreClose = () => {
-		setMoreAnchorEl(null);
-	};
-
 	const isMoreOpen = Boolean(moreAnchorEl);
+	const handleMoreClose = () => setMoreAnchorEl(null);
 
 	return (
 		<>
@@ -67,6 +65,7 @@ const ControlButtonsBar = (): JSX.Element => {
 				<MicButton offColor='error' toolTipLocation='bottom' />
 				<WebcamButton offColor='error' toolTipLocation='bottom' />
 				{ !isMobile && <ScreenshareButton toolTipLocation='bottom' /> }
+				{ !isMobile && raiseHandEnabled && <RaiseHandButton toolTipLocation='bottom' /> }
 				{ !isMobile && <ParticipantsButton toolTipLocation='bottom' onColor='primary' /> }
 				{ isMobile && <ParticipantsButton onClick={(event) => setParticipantAnchorEl(event.currentTarget)} toolTipLocation='bottom' /> }
 				{ !isMobile && chatEnabled && <ChatButton toolTipLocation='bottom' onColor='primary' /> }
@@ -111,6 +110,7 @@ const ControlButtonsBar = (): JSX.Element => {
 				{ filesharingEnabled && <Filesharing onClick={handleMoreClose} /> }
 				{ canTranscribe && <Transcription onClick={handleMoreClose} /> }
 				{ localRecordingEnabled && canRecord && <Recording onClick={handleMoreClose} /> }
+				{ !isMobile && <Drawing onClick={handleMoreClose} /> }
 			</FloatingMenu>
 		</>
 	);

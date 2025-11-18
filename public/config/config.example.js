@@ -7,10 +7,22 @@
 
 // eslint-disable-next-line
 var config = {
+	// If enabled QR code will show at the join dialog
+	qrCodeEnabled: false,
+	// If enabled countdownTimer will be enabled in the room.
+	countdownTimerEnabled: false,
+	// If enabled a Tooltip will show at the landing page and join dialog bottom
+	infoTooltipEnabled: false,
+	infoTooltipText: 'Tooltip text',
+	infoTooltipLink: '',
+	infoTooltipDesc: 'Tooltip desc ... Lorem ipsum',
 	// Location of management service.
 	managementUrl: 'http://localhost:3030',
 	// Location of the privacy files.
-	impressumUrl: '/privacy/privacy.html',
+	imprintUrl: '',
+	privacyUrl: '',
+
+	loginImageURL: '',
 	// If ability to log in is enabled.
 	loginEnabled: true,
 
@@ -133,6 +145,9 @@ var config = {
 		'raisedHand': {
 			'play': '/sounds/notify-hand.mp3'
 		},
+		'finishedCountdownTimer': {
+			'play': '/sounds/notify-countdowntimer.mp3'
+		},
 		'default': {
 			'debounce': 5000,
 			'play': '/sounds/notify.mp3'
@@ -145,6 +160,15 @@ var config = {
 	// If true, a random room name will be generated when the input field is blank;
 	// otherwise, it will remain empty and users will have to enter a room name.
 	randomizeOnBlank: true,
+
+	// Enable or disable transcription.
+	transcriptionEnabled: true,
+
+	// Imprint. If you want to link your imprint, please provide a URL in this variable. If it is empty, no link will be shown.
+	imprintUrl: '',
+
+	// Privacy notice. If you want to link your privacy notices, please provide a URL in this variable. If it is empty, no link will be shown.
+	privacyUrl: '',
 
 	// Client theme. Take a look at mui theme documentation.
 	theme: {
