@@ -45,10 +45,9 @@ const LogoImg = styled('img')(({ theme }) => ({
 	display: 'none',
 	marginLeft: theme.spacing(1),
 	marginRight: theme.spacing(1),
-	maxWidth: 120,
-	maxHeight: 24,
-	height: 'auto',
+	height: 24,
 	width: 'auto',
+	maxWidth: 120,
 	objectFit: 'contain',
 	[theme.breakpoints.up('sm')]: {
 		display: 'block'
