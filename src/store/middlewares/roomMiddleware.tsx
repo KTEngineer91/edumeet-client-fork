@@ -62,7 +62,7 @@ const createRoomMiddleware = ({
 								filesharingEnabled,
 								raiseHandEnabled,
 								localRecordingEnabled,
-								logo: settings.logo || edumeetConfig.theme.logo,
+								logo: edumeetConfig.theme.logo, // Always use client config logo
 								backgroundImage: settings.background || edumeetConfig.theme.backgroundImage,
 									videoCodec: settings.videoCodec ?? 'vp8',
 									simulcast: settings.simulcast ?? true,
@@ -97,7 +97,7 @@ const createRoomMiddleware = ({
 								raiseHandEnabled,
 								localRecordingEnabled,
 								breakoutsEnabled,
-								logo: settings.logo || edumeetConfig.theme.logo,
+								logo: edumeetConfig.theme.logo, // Always use client config logo
 								backgroundImage: settings.background || edumeetConfig.theme.backgroundImage,
 									videoCodec: settings.videoCodec ?? 'vp8',
 									simulcast: settings.simulcast ?? true,
