@@ -45,10 +45,10 @@ const LogoContainer = styled('div')(({ theme }) => ({
 	display: 'none',
 	marginLeft: theme.spacing(1),
 	marginRight: theme.spacing(1),
-	height: '24px',
-	width: '120px',
-	maxHeight: '24px',
-	maxWidth: '120px',
+	height: '47px',
+	width: '200px',
+	maxHeight: '47px',
+	maxWidth: '200px',
 	overflow: 'hidden',
 	position: 'relative',
 	[theme.breakpoints.up('sm')]: {
@@ -59,10 +59,10 @@ const LogoContainer = styled('div')(({ theme }) => ({
 }));
 
 const LogoImg = styled('img')({
-	height: '24px !important',
-	width: 'auto !important',
-	maxHeight: '24px !important',
-	maxWidth: '120px !important',
+	height: '47px',
+	width: 'auto',
+	maxHeight: '47px',
+	maxWidth: '200px',
 	objectFit: 'contain',
 	display: 'block',
 	boxSizing: 'border-box'
