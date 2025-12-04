@@ -93,7 +93,7 @@ export const defaultEdumeetConfig: EdumeetConfig = {
 		background: 'linear-gradient(135deg, rgba(1,42,74,1) 0%, rgba(1,58,99,1) 50%, rgba(1,73,124,1) 100%)',
 		appBarColor: 'rgba(0, 0, 0, 0.4)',
 		appBarFloating: true,
-		logo: 'images/logo.edumeet.svg',
+		logo: '/images/pages/Logo.png',
 		activeSpeakerBorder: '1px solid rgba(255, 255, 255, 1.0)',
 		videoBackroundColor: 'rgba(49, 49, 49, 0.9)',
 		videoAvatarImage: 'images/buddy.svg',
