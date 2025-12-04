@@ -45,21 +45,27 @@ const LogoContainer = styled('div')(({ theme }) => ({
 	display: 'none',
 	marginLeft: theme.spacing(1),
 	marginRight: theme.spacing(1),
-	height: 24,
-	width: 120,
+	height: '24px',
+	width: '120px',
+	maxHeight: '24px',
+	maxWidth: '120px',
 	overflow: 'hidden',
+	position: 'relative',
 	[theme.breakpoints.up('sm')]: {
 		display: 'flex',
-		alignItems: 'center'
+		alignItems: 'center',
+		justifyContent: 'flex-start'
 	}
 }));
 
 const LogoImg = styled('img')({
-	height: '100%',
-	width: 'auto',
-	maxWidth: '100%',
+	height: '24px !important',
+	width: 'auto !important',
+	maxHeight: '24px !important',
+	maxWidth: '120px !important',
 	objectFit: 'contain',
-	display: 'block'
+	display: 'block',
+	boxSizing: 'border-box'
 });
 
 interface TopBarDivProps {
