@@ -10,6 +10,7 @@ import { meActions } from '../slices/meSlice';
 import { initialRoomSession, roomSessionsActions } from '../slices/roomSessionsSlice';
 import { settingsActions } from '../slices/settingsSlice';
 import { Logger } from '../../utils/Logger';
+import edumeetConfig from '../../utils/edumeetConfig';
 
 const logger = new Logger('RoomMiddleware');
 
@@ -55,14 +56,14 @@ const createRoomMiddleware = ({
 								}));
 								dispatch(meActions.setSessionId(sessionId));
 								dispatch(settingsActions.setMaxActiveVideos(maxActiveVideos));
-								dispatch(roomActions.updateRoom({
-									breakoutsEnabled,
-									chatEnabled,
-									filesharingEnabled,
-									raiseHandEnabled,
-									localRecordingEnabled,
-									logo: settings.logo,
-									backgroundImage: settings.background,
+							dispatch(roomActions.updateRoom({
+								breakoutsEnabled,
+								chatEnabled,
+								filesharingEnabled,
+								raiseHandEnabled,
+								localRecordingEnabled,
+								logo: settings.logo || edumeetConfig.theme.logo,
+								backgroundImage: settings.background || edumeetConfig.theme.backgroundImage,
 									videoCodec: settings.videoCodec ?? 'vp8',
 									simulcast: settings.simulcast ?? true,
 									audioCodec: settings.audioCodec ?? 'opus',
@@ -90,14 +91,14 @@ const createRoomMiddleware = ({
 							} = notification.data;
 
 							batch(() => {
-								dispatch(roomActions.updateRoom({
-									chatEnabled,
-									filesharingEnabled,
-									raiseHandEnabled,
-									localRecordingEnabled,
-									breakoutsEnabled,
-									logo: settings.logo,
-									backgroundImage: settings.background,
+							dispatch(roomActions.updateRoom({
+								chatEnabled,
+								filesharingEnabled,
+								raiseHandEnabled,
+								localRecordingEnabled,
+								breakoutsEnabled,
+								logo: settings.logo || edumeetConfig.theme.logo,
+								backgroundImage: settings.background || edumeetConfig.theme.backgroundImage,
 									videoCodec: settings.videoCodec ?? 'vp8',
 									simulcast: settings.simulcast ?? true,
 									audioCodec: settings.audioCodec ?? 'opus',
