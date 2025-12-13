@@ -13,7 +13,11 @@ const ClickableLabel = styled('span')(() => ({
   cursor: 'pointer',
 }));
 
-const PrecallTitle = (): React.JSX.Element => {
+interface PrecallTitleProps {
+	hideLoginButton?: boolean;
+}
+
+const PrecallTitle = ({ hideLoginButton = false }: PrecallTitleProps): React.JSX.Element => {
 	const dispatch = useAppDispatch();
 
 	const logo = useAppSelector((state) => state.room.logo);
@@ -32,7 +36,7 @@ const PrecallTitle = (): React.JSX.Element => {
 					<Typography variant='h5'> {edumeetConfig.title} </Typography>}
 			</Grid>
 			<Grid size={4} style={{ display: 'flex', justifyContent: 'end' }} >
-				{loginEnabled &&
+				{loginEnabled && !hideLoginButton &&
 					<>
 						{loggedIn ? <LogoutButton
 							type='iconbutton'
