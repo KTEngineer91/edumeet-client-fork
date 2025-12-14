@@ -41,16 +41,32 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 	}
 }));
 
-const LogoImg = styled('img')(({ theme }) => ({
+const LogoContainer = styled('div')(({ theme }) => ({
 	display: 'none',
 	marginLeft: theme.spacing(1),
 	marginRight: theme.spacing(1),
-	maxWidth: 200,
-	maxHeight: 32,
+	height: '47px',
+	width: '200px',
+	maxHeight: '47px',
+	maxWidth: '200px',
+	overflow: 'hidden',
+	position: 'relative',
 	[theme.breakpoints.up('sm')]: {
-		display: 'block'
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'flex-start'
 	}
 }));
+
+const LogoImg = styled('img')({
+	height: '47px',
+	width: 'auto',
+	maxHeight: '47px',
+	maxWidth: '200px',
+	objectFit: 'contain',
+	display: 'block',
+	boxSizing: 'border-box'
+});
 
 interface TopBarDivProps {
 	gap?: number;
@@ -104,7 +120,9 @@ const TopBar = ({ fullscreenEnabled, fullscreen, onFullscreen }: TopBarProps): R
 			<Toolbar variant='dense'>
 				<TopBarDiv marginLeft={1}>
 					{ logo ?
-						<LogoImg alt='Logo' src={ logo }/>
+						<LogoContainer>
+							<LogoImg alt='Logo' src={ logo }/>
+						</LogoContainer>
 						:
 						<Typography variant='h6' noWrap color='inherit'>
 							{ edumeetConfig.title }

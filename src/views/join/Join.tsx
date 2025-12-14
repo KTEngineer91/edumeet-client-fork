@@ -73,7 +73,7 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
 
   return (
     <GenericDialog
-      title={<PrecallTitle />}
+      title={<PrecallTitle hideLoginButton={true} />}
       content={
         <>
           <MediaPreview
