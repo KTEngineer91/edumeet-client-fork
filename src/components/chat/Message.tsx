@@ -3,6 +3,7 @@ import { FormattedTime } from 'react-intl';
 import { meLabel } from '../translated/translatedComponents';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
 
 export type MessageFormat = 'single' | 'combinedBegin' | 'combinedMiddle' | 'combinedEnd';
 
@@ -115,11 +116,15 @@ const Message = ({
 		return `<a target='_blank' href='${href}' title='${title}'>${linkText}</a>`;
 	};
 
+	const avatarName = isMe ? meLabel() : name;
+	const initialLetter = getInitialLetter(avatarName);
+	const letterAvatarSrc = makeLetterAvatarSrc(initialLetter);
+
 	return (
 		<StyledMessage isMe={isMe ? 1 : 0} format={format}>
 			<StyledMessageAvatar>
 				{ (format === 'single' || format ==='combinedBegin') ?
-					<img alt='A' src='/images/buddy.svg' />
+					<img alt={`${initialLetter} avatar`} src={letterAvatarSrc} />
 					:
 					<StyledMessageTime>
 						<FormattedTime value={new Date(time || Date.now())} hour12={false} />

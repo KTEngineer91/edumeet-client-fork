@@ -1,6 +1,7 @@
 import { ThemeOptions } from '@mui/material';
 import { ClientMonitorConfig } from '@observertc/client-monitor-js';
 import { TFLite } from '../services/effectsService';
+import { makeLetterAvatarSrc } from './avatarUtils';
 
 export const defaultEdumeetConfig: EdumeetConfig = {
 	qrCodeEnabled: false,
@@ -96,7 +97,7 @@ export const defaultEdumeetConfig: EdumeetConfig = {
 		logo: '/images/pages/Logo.png',
 		activeSpeakerBorder: '1px solid rgba(255, 255, 255, 1.0)',
 		videoBackroundColor: 'rgba(49, 49, 49, 0.9)',
-		videoAvatarImage: 'images/buddy.svg',
+		videoAvatarImage: makeLetterAvatarSrc('?'),
 		roundedness: 10,
 		sideContentItemColor: 'rgba(255, 255, 255, 0.4)',
 		sideContentItemDarkColor: 'rgba(150, 150, 150, 0.4)',

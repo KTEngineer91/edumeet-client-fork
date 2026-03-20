@@ -4,7 +4,7 @@ import PanIcon from '@mui/icons-material/BackHand';
 import { useAppDispatch, useAppSelector, usePeerConsumers } from '../../store/hooks';
 import { lowerPeerHand } from '../../store/actions/peerActions';
 import Volume from '../volume/Volume';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PeerMenu from '../peermenu/PeerMenu';
 import ScreenShareIcon from '@mui/icons-material/ScreenShareOutlined';
 import MicUnMutedIcon from '@mui/icons-material/MicNoneOutlined';
@@ -12,6 +12,7 @@ import WebcamIcon from '@mui/icons-material/VideocamOutlined';
 import MoreButton from '../controlbuttons/MoreButton';
 import { roomSessionsActions } from '../../store/slices/roomSessionsSlice';
 import RecordIcon from '../recordicon/RecordIcon';
+import { getInitialLetter, makeLetterAvatarSrc, resolveBreezeshotAvatarUrl } from '../../utils/avatarUtils';
 
 interface ListPeerProps {
 	peer: Peer;
@@ -61,6 +62,7 @@ const ListPeer = ({ peer, isModerator }: ListPeerProps): JSX.Element => {
 	const { micConsumer, webcamConsumer, screenConsumer } = usePeerConsumers(peer.id);
 	const [ moreAnchorEl, setMoreAnchorEl ] = useState<HTMLElement | null>();
 	const handleMenuClose = () => setMoreAnchorEl(null);
+	const [ pictureError, setPictureError ] = useState(false);
 
 	const isSelected = useAppSelector((state) => state.roomSessions[peer.sessionId].selectedPeers.includes(peer.id));
 	
@@ -69,13 +71,27 @@ const ListPeer = ({ peer, isModerator }: ListPeerProps): JSX.Element => {
 	const hasVideo = webcamConsumer && !webcamConsumer.localPaused && !webcamConsumer.remotePaused;
 	const hasScreen = screenConsumer && !screenConsumer.localPaused && !screenConsumer.remotePaused;
 
+	useEffect(() => setPictureError(false), [ peer.picture ]);
+
+	const pictureUrl = resolveBreezeshotAvatarUrl(peer.picture);
+	const initialLetter = getInitialLetter(peer.displayName);
+	const letterAvatarSrc = makeLetterAvatarSrc(initialLetter);
+	const resolvedSrc = pictureUrl && !pictureError ? pictureUrl : letterAvatarSrc;
+
 	return (
 		<>
 			<PeerDiv selected={isSelected ? 1 : 0} onClick={() => {
 				if (isSelected) dispatch(roomSessionsActions.deselectPeer({ sessionId: peer.sessionId, peerId: peer.id }));
 				else dispatch(roomSessionsActions.selectPeer({ sessionId: peer.sessionId, peerId: peer.id }));
 			}}>
-				<PeerAvatar src={peer.picture?.trim() || '/images/buddy.svg'} />
+				<PeerAvatar
+					src={resolvedSrc}
+					alt={`${initialLetter} avatar`}
+					onError={() => {
+						// If the backend image URL fails (different server/CORS/404), fall back to the letter avatar.
+						if (pictureUrl) setPictureError(true);
+					}}
+				/>
 				{ peer.recording && <RecordIcon color='error' /> }
 				{ peer.raisedHand &&
 					<IconButton

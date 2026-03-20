@@ -13,6 +13,7 @@ import DisplayName from '../displayname/DisplayName';
 import MediaControls from '../mediacontrols/MediaControls';
 import ScreenshareButton from '../controlbuttons/ScreenshareButton';
 import ExtraVideoButton from '../controlbuttons/ExtraVideoButton';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
 
 type SpotlightsDivProps = {
 	headless: number;
@@ -66,6 +67,7 @@ const Spotlights = ({
 	const drawingEnabled = useAppSelector((state) => state.drawing.drawingEnabled);
 
 	const displayName = useAppSelector((state) => state.settings.displayName);
+	const letterAvatarSrc = makeLetterAvatarSrc(getInitialLetter(displayName));
 	const [ dimensions, setDimensions ] = useState<Record<'peerWidth' | 'peerHeight', number>>({ peerWidth: 320, peerHeight: 240 });
 
 	const updateDimensions = (): void => {
@@ -137,6 +139,7 @@ const Spotlights = ({
 					order={2}
 					width={style.width}
 					height={style.height}
+					avatarSrc={letterAvatarSrc}
 				>
 					<VideoView source='screen' contain />
 					<DisplayName disabled={false} displayName={displayName} isMe />
@@ -158,6 +161,7 @@ const Spotlights = ({
 					order={3}
 					width={style.width}
 					height={style.height}
+					avatarSrc={letterAvatarSrc}
 				>
 					<VideoView source='extravideo' />
 					<DisplayName disabled={false} displayName={displayName} isMe />
@@ -179,6 +183,7 @@ const Spotlights = ({
 					order={4}
 					width={style.width}
 					height={style.height}
+					avatarSrc={letterAvatarSrc}
 				>
 					<Suspense>
 						<DrawingView width={style.width} height={style.height}/>

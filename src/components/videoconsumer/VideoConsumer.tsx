@@ -3,6 +3,7 @@ import {
 	usePeer,
 	usePeerConsumers
 } from '../../store/hooks';
+import { useEffect, useMemo, useState } from 'react';
 import { activeSpeakerIdSelector, isMobileSelector } from '../../store/selectors';
 import { StateConsumer } from '../../store/slices/consumersSlice';
 import FullscreenVideoButton from '../controlbuttons/FullscreenVideoButton';
@@ -14,6 +15,7 @@ import QualityIndicator from '../rtpquality/QualityIndicator';
 import VideoBox from '../videobox/VideoBox';
 import VideoView from '../videoview/VideoView';
 import Volume from '../volume/Volume';
+import { getInitialLetter, makeLetterAvatarSrc, resolveBreezeshotAvatarUrl } from '../../utils/avatarUtils';
 
 interface VideoConsumerProps {
 	consumer: StateConsumer;
@@ -31,12 +33,35 @@ const VideoConsumer = ({ consumer, style }: VideoConsumerProps): JSX.Element => 
 	const headless = useAppSelector((state) => state.room.headless);
 	const showStats = useAppSelector((state) => state.ui.showStats);
 
+	const pictureUrl = resolveBreezeshotAvatarUrl(peer?.picture);
+	const initialLetter = getInitialLetter(peer?.displayName);
+	const letterAvatarSrc = useMemo(() => makeLetterAvatarSrc(initialLetter), [ initialLetter ]);
+
+	const [ pictureLoaded, setPictureLoaded ] = useState(false);
+
+	useEffect(() => {
+		if (!pictureUrl) {
+			setPictureLoaded(false);
+			return;
+		}
+
+		// Preload to fall back if the image URL is unreachable from this client/server.
+		setPictureLoaded(false);
+		const img = new Image();
+		img.onload = () => setPictureLoaded(true);
+		img.onerror = () => setPictureLoaded(false);
+		img.src = pictureUrl;
+	}, [ pictureUrl ]);
+
+	const avatarSrc = pictureUrl && pictureLoaded ? pictureUrl : letterAvatarSrc;
+
 	return (
 		<VideoBox
 			activeSpeaker={activeSpeaker}
 			order={1}
 			width={style.width}
 			height={style.height}
+			avatarSrc={avatarSrc}
 		>
 			<VideoView consumer={consumer} contain={contain} />
 			{ micConsumer && <Volume consumer={micConsumer} /> }
