@@ -9,6 +9,8 @@ import { meLabel } from '../translated/translatedComponents';
 import { useEffect, useState } from 'react';
 import { setDisplayName } from '../../store/actions/meActions';
 import { isMobileSelector } from '../../store/selectors';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 const StyledTextField = styled(TextField)(() => ({
 	flexGrow: 1,
@@ -55,8 +57,10 @@ const ListMe = (): JSX.Element => {
 	const dispatch = useAppDispatch();
 	const [ value, setValue ] = useState(displayName);
 	const [ isEditing, setIsEditing ] = useState(false);
+	const [ pictureError, setPictureError ] = useState(false);
 
 	useEffect(() => setValue(displayName), [ displayName ]);
+	useEffect(() => setPictureError(false), [ picture ]);
 
 	const handleFinished = () => {
 		if (value && value !== displayName)
@@ -66,10 +70,21 @@ const ListMe = (): JSX.Element => {
 	};
 
 	const prefix = !isEditing ? `(${meLabel()}) ` : '';
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(picture);
+	const initialLetter = getInitialLetter(displayName);
+	const letterAvatarSrc = makeLetterAvatarSrc(initialLetter);
+	const resolvedSrc = pictureUrl && !pictureError ? pictureUrl : letterAvatarSrc;
 
 	return (
 		<MeDiv>
-			<MeAvatar src={picture?.trim() || '/images/buddy.svg'} />
+			<MeAvatar
+				src={resolvedSrc}
+				alt={`${initialLetter} avatar`}
+				onError={() => {
+					// If the backend image URL fails (different server/CORS/404), fall back to the letter avatar.
+					if (pictureUrl) setPictureError(true);
+				}}
+			/>
 			{ isEditing ?
 				<StyledTextField
 					value={`${prefix}${value}`}

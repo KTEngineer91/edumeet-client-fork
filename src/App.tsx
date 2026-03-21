@@ -23,8 +23,9 @@ import { meActions } from "./store/slices/meSlice";
 import InvalidUrlImage from "../public/images/invalid_url.png";
 import ErrorIconImage from "../public/images/error_icon.png";
 import LoadingIconImage from "../public/images/loading_icon.png";
-import { Logger } from "./utils/Logger";
 import edumeetConfig from './utils/edumeetConfig';
+import { getBreezeshotUserProfilePicture } from "./utils/avatarUtils";
+import { Logger } from "./utils/Logger";
 
 type AppParams = {
   id: string;
@@ -238,6 +239,15 @@ const App = (): JSX.Element => {
       dispatch(meActions.setWebGLSupport(true));
     }
   }, []);
+
+  // BreezeShot user payload includes profile image; sync into me.picture for precall/room avatars + join().
+  useEffect(() => {
+    if (!userData) return;
+
+    const pic = getBreezeshotUserProfilePicture(userData);
+
+    if (pic) dispatch(meActions.setPicture(pic));
+  }, [userData, dispatch]);
 
   const isValidUrl = (roomId && token) || (roomId && topicId && userKey) || (roomId && !!existingSession);
 

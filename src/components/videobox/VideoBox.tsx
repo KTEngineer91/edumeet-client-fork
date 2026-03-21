@@ -10,6 +10,7 @@ interface VideoBoxProps {
 	order?: number;
 	activeSpeaker?: boolean;
 	roundedCorners?: boolean;
+	avatarSrc?: string;
 	children?: ReactNode;
 	sx?: SxProps<Theme>;
 }
@@ -22,9 +23,13 @@ type StyledVideoBoxProps = {
 	order?: number;
 	activespeaker?: number;
 	roundedcorners?: number;
+	avatarSrc?: string;
 };
 
-const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
+const StyledVideoBox = styled(Box, {
+	shouldForwardProp: (prop) =>
+		prop !== 'avatarSrc' && prop !== 'activespeaker' && prop !== 'roundedcorners',
+})<StyledVideoBoxProps>(({
 	theme,
 	position,
 	height,
@@ -33,6 +38,7 @@ const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
 	order,
 	activespeaker,
 	roundedcorners,
+	avatarSrc,
 }) => ({
 	position,
 	width,
@@ -44,8 +50,8 @@ const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
 	}),
 	boxShadow: theme.shadows[10],
 	backgroundColor: theme.videoBackroundColor,
-	backgroundImage: `url(${theme.videoAvatarImage})`,
-	backgroundPosition: 'bottom',
+	backgroundImage: `url(${avatarSrc || theme.videoAvatarImage})`,
+	backgroundPosition: 'center',
 	backgroundSize: 'auto 85%',
 	backgroundRepeat: 'no-repeat',
 	borderRadius: roundedcorners ? theme.roundedness : '0',
@@ -59,6 +65,7 @@ const VideoBox = ({
 	order,
 	sx,
 	activeSpeaker,
+	avatarSrc,
 	children,
 	roundedCorners = true,
 }: VideoBoxProps): JSX.Element => {
@@ -70,6 +77,7 @@ const VideoBox = ({
 			activespeaker={activeSpeaker ? 1 : 0}
 			order={order}
 			margin={margin}
+			avatarSrc={avatarSrc}
 			children={children}
 			roundedcorners={roundedCorners ? 1 : 0}
 			sx={sx}
