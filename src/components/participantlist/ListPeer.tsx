@@ -12,7 +12,8 @@ import WebcamIcon from '@mui/icons-material/VideocamOutlined';
 import MoreButton from '../controlbuttons/MoreButton';
 import { roomSessionsActions } from '../../store/slices/roomSessionsSlice';
 import RecordIcon from '../recordicon/RecordIcon';
-import { getInitialLetter, makeLetterAvatarSrc, resolveBreezeshotAvatarUrl } from '../../utils/avatarUtils';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 interface ListPeerProps {
 	peer: Peer;
@@ -73,7 +74,7 @@ const ListPeer = ({ peer, isModerator }: ListPeerProps): JSX.Element => {
 
 	useEffect(() => setPictureError(false), [ peer.picture ]);
 
-	const pictureUrl = resolveBreezeshotAvatarUrl(peer.picture);
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(peer.picture);
 	const initialLetter = getInitialLetter(peer.displayName);
 	const letterAvatarSrc = makeLetterAvatarSrc(initialLetter);
 	const resolvedSrc = pictureUrl && !pictureError ? pictureUrl : letterAvatarSrc;

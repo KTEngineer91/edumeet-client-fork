@@ -1,3 +1,4 @@
+import { resolveBreezeshotAvatarUrl } from './avatarUtils';
 import { defaultEdumeetConfig, EdumeetConfig } from './types';
 
 declare module '@mui/material/styles' {
@@ -38,8 +39,14 @@ declare global {
 	}
 }
 
-export default {
+const edumeetConfig = {
 	...defaultEdumeetConfig,
 	...window.config,
 	theme: { ...defaultEdumeetConfig.theme, ...window.config?.theme }
 };
+
+export function resolveBreezeshotAvatarUrlFromConfig(imageUrl?: string): string {
+	return resolveBreezeshotAvatarUrl(imageUrl, edumeetConfig.breezeshotApiBaseUrl);
+}
+
+export default edumeetConfig;

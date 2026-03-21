@@ -26,7 +26,10 @@ type StyledVideoBoxProps = {
 	avatarSrc?: string;
 };
 
-const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
+const StyledVideoBox = styled(Box, {
+	shouldForwardProp: (prop) =>
+		prop !== 'avatarSrc' && prop !== 'activespeaker' && prop !== 'roundedcorners',
+})<StyledVideoBoxProps>(({
 	theme,
 	position,
 	height,
@@ -48,7 +51,7 @@ const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
 	boxShadow: theme.shadows[10],
 	backgroundColor: theme.videoBackroundColor,
 	backgroundImage: `url(${avatarSrc || theme.videoAvatarImage})`,
-	backgroundPosition: 'bottom',
+	backgroundPosition: 'center',
 	backgroundSize: 'auto 85%',
 	backgroundRepeat: 'no-repeat',
 	borderRadius: roundedcorners ? theme.roundedness : '0',

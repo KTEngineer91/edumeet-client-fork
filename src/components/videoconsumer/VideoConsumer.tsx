@@ -15,7 +15,8 @@ import QualityIndicator from '../rtpquality/QualityIndicator';
 import VideoBox from '../videobox/VideoBox';
 import VideoView from '../videoview/VideoView';
 import Volume from '../volume/Volume';
-import { getInitialLetter, makeLetterAvatarSrc, resolveBreezeshotAvatarUrl } from '../../utils/avatarUtils';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 interface VideoConsumerProps {
 	consumer: StateConsumer;
@@ -33,7 +34,7 @@ const VideoConsumer = ({ consumer, style }: VideoConsumerProps): JSX.Element => 
 	const headless = useAppSelector((state) => state.room.headless);
 	const showStats = useAppSelector((state) => state.ui.showStats);
 
-	const pictureUrl = resolveBreezeshotAvatarUrl(peer?.picture);
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(peer?.picture);
 	const initialLetter = getInitialLetter(peer?.displayName);
 	const letterAvatarSrc = useMemo(() => makeLetterAvatarSrc(initialLetter), [ initialLetter ]);
 
@@ -42,12 +43,14 @@ const VideoConsumer = ({ consumer, style }: VideoConsumerProps): JSX.Element => 
 	useEffect(() => {
 		if (!pictureUrl) {
 			setPictureLoaded(false);
-			return;
+			
+return;
 		}
 
 		// Preload to fall back if the image URL is unreachable from this client/server.
 		setPictureLoaded(false);
 		const img = new Image();
+
 		img.onload = () => setPictureLoaded(true);
 		img.onerror = () => setPictureLoaded(false);
 		img.src = pictureUrl;

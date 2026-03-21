@@ -9,7 +9,8 @@ import { meLabel } from '../translated/translatedComponents';
 import { useEffect, useState } from 'react';
 import { setDisplayName } from '../../store/actions/meActions';
 import { isMobileSelector } from '../../store/selectors';
-import { getInitialLetter, makeLetterAvatarSrc, resolveBreezeshotAvatarUrl } from '../../utils/avatarUtils';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 const StyledTextField = styled(TextField)(() => ({
 	flexGrow: 1,
@@ -69,7 +70,7 @@ const ListMe = (): JSX.Element => {
 	};
 
 	const prefix = !isEditing ? `(${meLabel()}) ` : '';
-	const pictureUrl = resolveBreezeshotAvatarUrl(picture);
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(picture);
 	const initialLetter = getInitialLetter(displayName);
 	const letterAvatarSrc = makeLetterAvatarSrc(initialLetter);
 	const resolvedSrc = pictureUrl && !pictureError ? pictureUrl : letterAvatarSrc;

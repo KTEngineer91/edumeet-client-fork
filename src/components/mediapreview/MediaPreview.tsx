@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTheme } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import MicPreviewButton from '../controlbuttons/MicPreviewButton';
@@ -8,6 +8,8 @@ import VideoBox from '../videobox/VideoBox';
 import VideoView from '../videoview/VideoView';
 import { stopPreviewMic, stopPreviewWebcam, updatePreviewMic, updatePreviewWebcam } from '../../store/actions/mediaActions';
 import Volume from '../volume/Volume';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 interface MediaPreviewProps {
 	withControls?: boolean;
@@ -35,6 +37,31 @@ const MediaPreview = ({
 	const contain = useAppSelector((state) => state.settings.videoContainEnabled);
 	// We do not send it so the state is different on join dialog.
 	const micEnabled = useAppSelector((state) => state.me.previewMicTrackId);
+	const picture = useAppSelector((state) => state.me.picture);
+	const displayName = useAppSelector((state) => state.settings.displayName);
+
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(picture);
+	const initialLetter = getInitialLetter(displayName);
+	const letterAvatarSrc = useMemo(() => makeLetterAvatarSrc(initialLetter), [ initialLetter ]);
+
+	const [ pictureLoaded, setPictureLoaded ] = useState(false);
+
+	useEffect(() => {
+		if (!pictureUrl) {
+			setPictureLoaded(false);
+
+			return;
+		}
+
+		setPictureLoaded(false);
+		const img = new Image();
+
+		img.onload = () => setPictureLoaded(true);
+		img.onerror = () => setPictureLoaded(false);
+		img.src = pictureUrl;
+	}, [ pictureUrl ]);
+
+	const avatarSrc = pictureUrl && pictureLoaded ? pictureUrl : letterAvatarSrc;
 
 	useEffect(() => {
 		if (startAudio) dispatch(updatePreviewMic({ newDeviceId: audioDevice, updateSelection }));
@@ -52,7 +79,7 @@ const MediaPreview = ({
 				paddingBottom: `${100 / aspectRatio}%`,
 				marginTop: theme.spacing(1),
 				marginBottom: theme.spacing(1)
-			}}>
+			}} avatarSrc={avatarSrc}>
 				{ withControls && (
 					<MediaControls
 						orientation='vertical'

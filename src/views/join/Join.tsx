@@ -71,6 +71,10 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
     }
   }, []);
 
+  useEffect(() => {
+    dispatch(settingsActions.setDisplayName(userName ?? 'Guest User'));
+  }, [ userName ]);
+
   return (
     <GenericDialog
       title={<PrecallTitle hideLoginButton={true} />}

@@ -8,7 +8,8 @@ import VideoView from '../videoview/VideoView';
 import Volume from '../volume/Volume';
 import PeerStatsView from '../rtpquality/PeerStatsView';
 import QualityIndicator from '../rtpquality/QualityIndicator';
-import { getInitialLetter, makeLetterAvatarSrc, resolveBreezeshotAvatarUrl } from '../../utils/avatarUtils';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 interface MeProps {
 	style: Record<'width' | 'height', number>
@@ -27,23 +28,26 @@ const Me = ({ style }: MeProps): React.JSX.Element => {
 	const micEnabled = useAppSelector((state) => state.me.micEnabled);
 	const webcamEnabled = useAppSelector((state) => state.me.webcamEnabled);
 
-	const pictureUrl = resolveBreezeshotAvatarUrl(picture);
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(picture);
 	const initialLetter = getInitialLetter(displayName);
 	const letterAvatarSrc = useMemo(() => makeLetterAvatarSrc(initialLetter), [ initialLetter ]);
 
 	const [ pictureLoaded, setPictureLoaded ] = useState(false);
+
 	useEffect(() => {
 		if (!pictureUrl) {
 			setPictureLoaded(false);
+
 			return;
 		}
 
 		setPictureLoaded(false);
 		const img = new Image();
+
 		img.onload = () => setPictureLoaded(true);
 		img.onerror = () => setPictureLoaded(false);
 		img.src = pictureUrl;
-	}, [ pictureUrl ]);
+	}, [ picture, pictureUrl ]);
 
 	const avatarSrc = pictureUrl && pictureLoaded ? pictureUrl : letterAvatarSrc;
 

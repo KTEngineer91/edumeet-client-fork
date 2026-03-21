@@ -108,7 +108,10 @@ export const defaultEdumeetConfig: EdumeetConfig = {
 		collectingPeriodInMs: 2000,
 	},
 	imprintUrl: '',
-	privacyUrl: ''
+	privacyUrl: '',
+
+	/** Base URL for relative BreezeShot `imageUrl` paths (`/uploads/...`). Overridable in `public/config/config.js` for local API (e.g. http://localhost:3002). */
+	breezeshotApiBaseUrl: 'https://api.breezeshot.com'
 };
 
 export interface EdumeetConfig {
@@ -158,6 +161,7 @@ export interface EdumeetConfig {
 	clientMontitor: ClientMonitorConfig;
 	imprintUrl: string;
 	privacyUrl: string;
+	breezeshotApiBaseUrl: string;
 }
 
 export interface HTMLMediaElementWithSink extends HTMLMediaElement {
