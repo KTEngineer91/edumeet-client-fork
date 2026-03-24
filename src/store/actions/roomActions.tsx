@@ -13,6 +13,8 @@ import { getSignalingUrl } from '../../utils/signalingHelpers';
 import { getTenantFromFqdn } from './managementActions';
 import { Logger } from '../../utils/Logger';
 import { stopListeners } from './startActions';
+import { hydratePeerProfiles, upsertCachedPeerProfile } from '../../utils/peerProfileCache';
+import { setDisplayName, setPicture } from './meActions';
 
 const logger = new Logger('RoomActions');
 
@@ -59,20 +61,48 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 	const displayName = getState().settings.displayName;
 	const { sessionId, picture } = getState().me;
 
-	const {
-		peers,
-		tracker,
-		maxFileSize,
-		chatHistory,
-		fileHistory,
-		countdownTimer,
-		drawing,
-		breakoutRooms,
-		locked,
-		lobbyPeers,
-	} = await signalingService.sendRequest('join', {
+	logger.warn('joinRoom request [displayName:%s, hasPicture:%s]', displayName || '(empty)', Boolean(picture));
+
+	const response = await signalingService.sendRequest('join', {
 		displayName,
 		picture,
+	});
+	const {
+		peers = [],
+		tracker,
+		maxFileSize,
+		chatHistory = [],
+		fileHistory = [],
+		countdownTimer,
+		drawing,
+		breakoutRooms = [],
+		locked,
+		lobbyPeers = [],
+	} = response ?? {};
+	const safeCountdownTimer = countdownTimer ?? {
+		initialTime: '00:00:00',
+		remainingTime: '00:00:00',
+		isStarted: false
+	};
+	const safeDrawing = drawing ?? {
+		isEnabled: false,
+		bgColor: '#FFFFFF',
+		canvasState: undefined
+	};
+
+	const hydratedPeers = hydratePeerProfiles(peers);
+
+	logger.warn(
+		'joinRoom response peers [count:%d, peers:%o]',
+		hydratedPeers.length,
+		hydratedPeers.map((peer) => ({ id: peer.id, displayName: peer.displayName, hasPicture: Boolean(peer.picture) }))
+	);
+
+	hydratedPeers.forEach((peer) => {
+		upsertCachedPeerProfile(peer.id, {
+			displayName: peer.displayName,
+			picture: peer.picture
+		});
 	});
 
 	fileService.tracker = tracker;
@@ -86,25 +116,30 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 		
 		dispatch(permissionsActions.setLocked(Boolean(locked)));
 		dispatch(roomSessionsActions.addRoomSessions(breakoutRooms));
-		dispatch(peersActions.addPeers(peers));
+		dispatch(peersActions.addPeers(hydratedPeers));
 		dispatch(lobbyPeersActions.addPeers(lobbyPeers));
 		dispatch(roomSessionsActions.addMessages({ sessionId, messages: chatHistory }));
 		dispatch(roomSessionsActions.addFiles({ sessionId, files: fileHistory }));
-		dispatch(roomActions.joinCountdownTimer(countdownTimer));
+		dispatch(roomActions.joinCountdownTimer(safeCountdownTimer));
 
-		dispatch(countdownTimer.isStarted ? 
+		dispatch(safeCountdownTimer.isStarted ? 
 			roomActions.startCountdownTimer() : 
 			roomActions.stopCountdownTimer()
 		);
 
-		dispatch(drawing.isEnabled ? 
+		dispatch(safeDrawing.isEnabled ? 
 			drawingActions.enableDrawing() : 
 			drawingActions.disableDrawing()
 		);
 
-		dispatch(drawingActions.setDrawingBgColor(drawing.bgColor));
-		dispatch(drawingActions.InitiateCanvas(drawing.canvasState));
+		dispatch(drawingActions.setDrawingBgColor(safeDrawing.bgColor));
+		dispatch(drawingActions.InitiateCanvas(safeDrawing.canvasState));
 	});
+
+	// Ensure server broadcasts canonical profile for this peer after join.
+	// This fixes cases where `newPeer` carries backend placeholder names (e.g. Hello123).
+	if (displayName) dispatch(setDisplayName(displayName));
+	if (picture) dispatch(setPicture(picture));
 	
 	if (!getState().me.audioMuted) dispatch(updateMic());
 	if (!getState().me.videoMuted) dispatch(updateWebcam());

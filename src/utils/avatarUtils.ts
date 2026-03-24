@@ -88,3 +88,82 @@ export const getBreezeshotUserProfilePicture = (user: unknown): string => {
 
 	return '';
 };
+
+/**
+ * Extract the best available display name from BreezeShot user payloads.
+ */
+export const getBreezeshotUserDisplayName = (user: unknown): string => {
+	if (!user || typeof user !== 'object') return '';
+
+	const u = user as Record<string, unknown>;
+	const isPlaceholder = (value?: string): boolean => {
+		const name = (value ?? '').trim();
+
+		if (!name) return true;
+		if (/^hello\d+$/i.test(name)) return true;
+		if (/^guest(?:\s+user)?$/i.test(name)) return true;
+
+		return false;
+	};
+	const firstString = (...values: unknown[]): string =>
+		values.find((value) => typeof value === 'string' && value.trim()) as string || '';
+	const nested = [
+		u.user,
+		u.profile,
+		u.attributes,
+		u.data,
+		typeof u.userData === 'object' ? u.userData : undefined
+	].filter((value): value is Record<string, unknown> => Boolean(value && typeof value === 'object'));
+
+	const directPreferred = firstString(
+		u.displayName,
+		u.display_name,
+		u.name,
+		u.fullName,
+		u.full_name,
+		u.firstName,
+		u.first_name
+	);
+
+	if (directPreferred && !isPlaceholder(directPreferred)) return directPreferred.trim();
+
+	for (const n of nested) {
+		const nestedPreferred = firstString(
+			n.displayName,
+			n.display_name,
+			n.name,
+			n.fullName,
+			n.full_name,
+			n.firstName,
+			n.first_name
+		);
+
+		if (nestedPreferred && !isPlaceholder(nestedPreferred)) return nestedPreferred.trim();
+	}
+
+	const first = firstString(u.firstName, u.first_name);
+	const last = firstString(u.lastName, u.last_name);
+	const combined = `${first.trim()} ${last.trim()}`.trim();
+
+	if (combined) return combined;
+
+	for (const n of nested) {
+		const nestedFirst = firstString(n.firstName, n.first_name);
+		const nestedLast = firstString(n.lastName, n.last_name);
+		const nestedCombined = `${nestedFirst.trim()} ${nestedLast.trim()}`.trim();
+
+		if (nestedCombined) return nestedCombined;
+	}
+
+	const directUsername = firstString(u.username, u.userName);
+
+	if (directUsername && !isPlaceholder(directUsername)) return directUsername.trim();
+
+	for (const n of nested) {
+		const nestedUsername = firstString(n.username, n.userName);
+
+		if (nestedUsername && !isPlaceholder(nestedUsername)) return nestedUsername.trim();
+	}
+
+	return '';
+};

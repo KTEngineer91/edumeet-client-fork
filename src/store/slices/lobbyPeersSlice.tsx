@@ -42,9 +42,9 @@ const lobbyPeersSlice = createSlice({
 					promotionInProgress
 				} = action.payload;
 
-				if (displayName)
+				if (displayName !== undefined)
 					peer.displayName = displayName;
-				if (picture)
+				if (picture !== undefined)
 					peer.picture = picture;
 				if (promotionInProgress)
 					peer.promotionInProgress = promotionInProgress;

@@ -75,7 +75,7 @@ const ListPeer = ({ peer, isModerator }: ListPeerProps): JSX.Element => {
 	useEffect(() => setPictureError(false), [ peer.picture ]);
 
 	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(peer.picture);
-	const initialLetter = getInitialLetter(peer.displayName);
+	const initialLetter = getInitialLetter(peer.displayName || peer.id);
 	const letterAvatarSrc = makeLetterAvatarSrc(initialLetter);
 	const resolvedSrc = pictureUrl && !pictureError ? pictureUrl : letterAvatarSrc;
 

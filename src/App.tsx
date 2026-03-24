@@ -24,7 +24,7 @@ import InvalidUrlImage from "../public/images/invalid_url.png";
 import ErrorIconImage from "../public/images/error_icon.png";
 import LoadingIconImage from "../public/images/loading_icon.png";
 import edumeetConfig from './utils/edumeetConfig';
-import { getBreezeshotUserProfilePicture } from "./utils/avatarUtils";
+import { getBreezeshotUserDisplayName, getBreezeshotUserProfilePicture } from "./utils/avatarUtils";
 import { Logger } from "./utils/Logger";
 
 type AppParams = {
@@ -130,8 +130,15 @@ const App = (): JSX.Element => {
         setErrorMessage(data?.message);
         return { success: false };
       }
-      setUserData(data?.user);
-      writeSession(data?.user);
+      const topLevel = data && typeof data === 'object' ? data : {};
+      const nestedUser = data?.user && typeof data.user === 'object' ? data.user : {};
+      const resolvedUser = { ...topLevel, ...nestedUser };
+      const resolvedName = getBreezeshotUserDisplayName(resolvedUser);
+
+      logger.warn('validate-edumeet-room resolved user [name:%s, keys:%o]', resolvedName || '(empty)', Object.keys(resolvedUser));
+
+      setUserData(resolvedUser);
+      writeSession(resolvedUser);
       return { success: true };
     };
     
@@ -151,8 +158,15 @@ const App = (): JSX.Element => {
         setErrorMessage(data?.message);
         return { success: false };
       }
-      setUserData(data?.user);
-      writeSession(data?.user);
+      const topLevel = data && typeof data === 'object' ? data : {};
+      const nestedUser = data?.user && typeof data.user === 'object' ? data.user : {};
+      const resolvedUser = { ...topLevel, ...nestedUser };
+      const resolvedName = getBreezeshotUserDisplayName(resolvedUser);
+
+      logger.warn('validate-token resolved user [name:%s, keys:%o]', resolvedName || '(empty)', Object.keys(resolvedUser));
+
+      setUserData(resolvedUser);
+      writeSession(resolvedUser);
       // Remove token from the URL so a refresh doesn't revalidate an expired token
       try {
         const url = new URL(window.location.href);
@@ -251,7 +265,17 @@ const App = (): JSX.Element => {
 
   const isValidUrl = (roomId && token) || (roomId && topicId && userKey) || (roomId && !!existingSession);
 
-  let name = (userData as any)?.username;
+  const name =
+    getBreezeshotUserDisplayName(userData) ||
+    (searchParams.get('displayName') ?? '').trim() ||
+    (searchParams.get('userName') ?? '').trim();
+  const userPicture = getBreezeshotUserProfilePicture(userData);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    logger.warn('join identity selected [roomId:%s, name:%s, hasPicture:%s]', roomId, name || '(empty)', Boolean(userPicture));
+  }, [roomId, name, userPicture]);
 
   const renderBreezeShotInfoContainer = ({
     image,
@@ -293,7 +317,7 @@ const App = (): JSX.Element => {
         ) : roomState === "lobby" ? (
           <Lobby />
         ) : (
-          roomState === "new" && <Join roomId={roomId as any} userName={name} />
+          roomState === "new" && <Join roomId={roomId as any} userName={name} userPicture={userPicture} />
         )}
       </StyledBackground>
     </SnackbarProvider>
