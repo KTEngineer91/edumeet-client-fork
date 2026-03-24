@@ -21,9 +21,18 @@ const App = lazy(() => import('./App'));
 // const LandingPage = lazy(() => import('./views/landingpage/LandingPage'));
 const UnsupportedBrowser = lazy(() => import('./views/unsupported/UnsupportedBrowser'));
 
-if (import.meta.env.VITE_APP_DEBUG === '*' || !import.meta.env.PROD) {
+// `Logger` uses the `debug` package — it prints nothing unless namespaces are enabled.
+// In production we only enable our app (otherwise join/peer/identity logs are silent).
+if (import.meta.env.VITE_APP_DEBUG === '*') {
+	debug.enable('*');
+} else if (!import.meta.env.PROD) {
 	debug.enable('* -engine* -socket* -RIE* *WARN* *ERROR*');
+} else {
+	debug.enable('edumeet-client:*');
 }
+
+// eslint-disable-next-line no-console
+console.info('[edumeet] Client started — filter console by: edumeet  or  edumeet:identity');
 
 const logger = new Logger('index.tsx');
 const theme = createTheme(edumeetConfig.theme);

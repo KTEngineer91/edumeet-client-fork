@@ -9,6 +9,7 @@ import { roomSessionsActions } from '../slices/roomSessionsSlice';
 import { p2pModeSelector } from '../selectors';
 import { Logger } from '../../utils/Logger';
 import { hydratePeerProfile, upsertCachedPeerProfile } from '../../utils/peerProfileCache';
+import { avatarDebug } from '../../utils/avatarDebug';
 
 const logger = new Logger('PeerMiddleware');
 
@@ -49,6 +50,12 @@ const createPeerMiddleware = ({
 									hydratedProfile.displayName || '(empty)',
 									Boolean(hydratedProfile.picture)
 								);
+								avatarDebug('newPeer notification', {
+									id,
+									rawName: displayName,
+									rawPicture: picture,
+									hydratedProfile
+								});
 
 								dispatch(peersActions.addPeer({
 									id,
@@ -114,6 +121,12 @@ const createPeerMiddleware = ({
 									hydratedProfile.displayName || '(empty)',
 									Boolean(hydratedProfile.picture)
 								);
+								avatarDebug(`${notification.method} notification`, {
+									peerId,
+									rawName: displayName,
+									rawPicture: picture,
+									hydratedProfile
+								});
 
 								dispatch(
 									peersActions.updatePeer({
