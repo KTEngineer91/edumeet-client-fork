@@ -35,7 +35,7 @@ const VideoConsumer = ({ consumer, style }: VideoConsumerProps): JSX.Element => 
 	const showStats = useAppSelector((state) => state.ui.showStats);
 
 	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(peer?.picture);
-	const initialLetter = getInitialLetter(peer?.displayName);
+	const initialLetter = getInitialLetter(peer?.displayName || peer?.id);
 	const letterAvatarSrc = useMemo(() => makeLetterAvatarSrc(initialLetter), [ initialLetter ]);
 
 	const [ pictureLoaded, setPictureLoaded ] = useState(false);

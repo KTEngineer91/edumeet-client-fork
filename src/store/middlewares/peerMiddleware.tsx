@@ -3,11 +3,12 @@ import { signalingActions } from '../slices/signalingSlice';
 import { AppDispatch, MiddlewareOptions, RootState } from '../store';
 import { peersActions } from '../slices/peersSlice';
 import { LobbyPeer, lobbyPeersActions } from '../slices/lobbyPeersSlice';
-import { setRaisedHand } from '../actions/meActions';
+import { setDisplayName, setPicture, setRaisedHand } from '../actions/meActions';
 import { stopMic, stopScreenSharing, stopWebcam } from '../actions/mediaActions';
 import { roomSessionsActions } from '../slices/roomSessionsSlice';
 import { p2pModeSelector } from '../selectors';
 import { Logger } from '../../utils/Logger';
+import { hydratePeerProfile, upsertCachedPeerProfile } from '../../utils/peerProfileCache';
 
 const logger = new Logger('PeerMiddleware');
 
@@ -39,17 +40,38 @@ const createPeerMiddleware = ({
 									raisedHandTimestamp,
 									recording,
 								} = notification.data;
+								const hydratedProfile = hydratePeerProfile(id, { displayName, picture });
+
+								logger.warn(
+									'newPeer notification [id:%s, rawName:%s, hydratedName:%s, hasPicture:%s]',
+									id,
+									displayName || '(empty)',
+									hydratedProfile.displayName || '(empty)',
+									Boolean(hydratedProfile.picture)
+								);
 
 								dispatch(peersActions.addPeer({
 									id,
 									sessionId,
-									displayName,
-									picture,
+									displayName: hydratedProfile.displayName,
+									picture: hydratedProfile.picture,
 									raisedHand,
 									raisedHandTimestamp,
 									recording,
 									transcripts: [],
 								}));
+								upsertCachedPeerProfile(id, hydratedProfile);
+
+								// Re-broadcast my current profile when someone joins so newcomers
+								// receive up-to-date name/picture even if initial join payload is stale.
+								const myPeerId = getState().me.id;
+								const myDisplayName = (getState().settings.displayName ?? '').trim();
+								const myPicture = (getState().me.picture ?? '').trim();
+
+								if (id !== myPeerId) {
+									if (myDisplayName) dispatch(setDisplayName(myDisplayName));
+									if (myPicture) dispatch(setPicture(myPicture));
+								}
 
 								break;
 							}
@@ -82,17 +104,28 @@ const createPeerMiddleware = ({
 									raisedHandTimestamp,
 									recording,
 								} = notification.data;
+								const hydratedProfile = hydratePeerProfile(peerId, { displayName, picture });
+
+								logger.warn(
+									'%s notification [peerId:%s, rawName:%s, hydratedName:%s, hasPicture:%s]',
+									notification.method,
+									peerId,
+									displayName || '(empty)',
+									hydratedProfile.displayName || '(empty)',
+									Boolean(hydratedProfile.picture)
+								);
 
 								dispatch(
 									peersActions.updatePeer({
 										id: peerId,
-										displayName,
-										picture,
+										displayName: hydratedProfile.displayName,
+										picture: hydratedProfile.picture,
 										raisedHand,
 										raisedHandTimestamp,
 										recording,
 									})
 								);
+								upsertCachedPeerProfile(peerId, hydratedProfile);
 
 								break;
 							}

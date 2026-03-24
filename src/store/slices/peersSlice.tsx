@@ -66,9 +66,9 @@ const peersSlice = createSlice({
 					recording,
 				} = action.payload;
 
-				if (displayName)
+				if (displayName !== undefined)
 					peer.displayName = displayName;
-				if (picture)
+				if (picture !== undefined)
 					peer.picture = picture;
 				if (videoInProgress !== undefined)
 					peer.videoInProgress = videoInProgress;

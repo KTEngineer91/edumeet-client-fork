@@ -7,6 +7,7 @@ import {
 import { activeSpeakerIsAudioOnlySelector, audioOnlySessionPeersSelector } from '../../store/selectors';
 import VideoBox from '../videobox/VideoBox';
 import { uiActions } from '../../store/slices/uiSlice';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
 
 const StyledPeers = styled(Chip)(() => ({
 	position: 'relative',
@@ -38,6 +39,8 @@ const Peers = ({ style }: PeersProps): JSX.Element => {
 
 	const visiblePeerNames = audioOnlyPeers.slice(0, 3);
 	const rest = audioOnlyPeers.slice(3);
+	const avatarSeed = visiblePeerNames[0]?.displayName || visiblePeerNames[0]?.id || 'Guest';
+	const avatarSrc = makeLetterAvatarSrc(getInitialLetter(avatarSeed));
 
 	const combinedPeerName = visiblePeerNames.map((peer) => {
 		let displayName = peer.displayName || peer.id;
@@ -55,6 +58,7 @@ const Peers = ({ style }: PeersProps): JSX.Element => {
 					order={10}
 					width={style.width}
 					height={style.height}
+					avatarSrc={avatarSrc}
 				>
 					<StyledPeers label={
 						<>

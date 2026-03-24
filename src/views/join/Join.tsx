@@ -27,13 +27,13 @@ import ImpressumButton from '../../components/controlbuttons/ImpressumButton';
 interface JoinProps {
   roomId: string;
   userName?: string;
+  userPicture?: string;
 }
 
-const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
+const Join = ({ roomId, userName, userPicture }: JoinProps): React.JSX.Element => {
   useNotifier();
   const dispatch = useAppDispatch();
 
-  const displayName = useAppSelector((state) => state.settings.displayName);
   const joinInProgress = useAppSelector((state) => state.room.joinInProgress);
   const mediaLoading = useAppSelector(
     (state) => state.me.videoInProgress || state.me.audioInProgress
@@ -41,6 +41,7 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
   const audioMuted = useAppSelector((state) => state.me.audioMuted);
   const videoMuted = useAppSelector((state) => state.me.videoMuted);
   const showAudioOutputChooser = useAppSelector(canSelectAudioOutput);
+  const resolvedDisplayName = (userName ?? '').trim() || 'Guest User';
 
   const url = new URL(window.location.href);
   const headless = Boolean(url.searchParams.get("headless"));
@@ -51,7 +52,8 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
     );
 
   const handleJoin = () => {
-    dispatch(settingsActions.setDisplayName(userName ?? 'Guest User'));
+    dispatch(settingsActions.setDisplayName(resolvedDisplayName));
+    dispatch(meActions.setPicture(userPicture ?? ''));
     dispatch(connect(roomId));
   };
 
@@ -72,8 +74,12 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
   }, []);
 
   useEffect(() => {
-    dispatch(settingsActions.setDisplayName(userName ?? 'Guest User'));
+    dispatch(settingsActions.setDisplayName(resolvedDisplayName));
   }, [ userName ]);
+
+  useEffect(() => {
+    dispatch(meActions.setPicture(userPicture ?? ''));
+  }, [ userPicture ]);
 
   return (
     <GenericDialog
@@ -95,7 +101,7 @@ const Join = ({ roomId, userName }: JoinProps): React.JSX.Element => {
           <ChooserDiv>
             <TextInputField
               label={yourNameLabel()}
-              value={userName ?? "Guest User"}
+              value={resolvedDisplayName}
               setValue={handleDisplayNameChange}
               onEnter={handleJoin}
               startAdornment={<AccountCircle />}

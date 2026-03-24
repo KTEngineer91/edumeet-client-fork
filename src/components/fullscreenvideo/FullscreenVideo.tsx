@@ -1,12 +1,37 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useAppSelector } from '../../store/hooks';
 import { fullscreenConsumerSelector } from '../../store/selectors';
 import FullscreenVideoButton from '../controlbuttons/FullscreenVideoButton';
 import MediaControls from '../mediacontrols/MediaControls';
 import VideoBox from '../videobox/VideoBox';
 import VideoView from '../videoview/VideoView';
+import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 
 const FullscreenVideo = (): JSX.Element => {
 	const consumer = useAppSelector(fullscreenConsumerSelector);
+	const peer = useAppSelector((state) => (consumer ? state.peers[consumer.peerId] : undefined));
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(peer?.picture);
+	const initialLetter = getInitialLetter(peer?.displayName || peer?.id);
+	const letterAvatarSrc = useMemo(() => makeLetterAvatarSrc(initialLetter), [ initialLetter ]);
+	const [ pictureLoaded, setPictureLoaded ] = useState(false);
+
+	useEffect(() => {
+		if (!pictureUrl) {
+			setPictureLoaded(false);
+
+			return;
+		}
+
+		setPictureLoaded(false);
+		const img = new Image();
+
+		img.onload = () => setPictureLoaded(true);
+		img.onerror = () => setPictureLoaded(false);
+		img.src = pictureUrl;
+	}, [ pictureUrl ]);
+
+	const avatarSrc = pictureUrl && pictureLoaded ? pictureUrl : letterAvatarSrc;
 
 	return (
 		<>
@@ -16,6 +41,7 @@ const FullscreenVideo = (): JSX.Element => {
 					roundedCorners={false}
 					width={'100%'}
 					height={'100%'}
+					avatarSrc={avatarSrc}
 				>
 					<VideoView consumer={consumer} contain roundedCorners={false} />
 					<MediaControls
