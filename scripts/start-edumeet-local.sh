@@ -145,12 +145,12 @@ pids+=($!)
 sleep 2
 
 echo "[4/4] Starting client (Vite)..."
-(cd "${CLIENT}" && yarn start) &
+(cd "${CLIENT}" && VITE_DEV_HTTP=1 yarn start) &
 pids+=($!)
 
 echo ""
 echo "All processes started. Press Ctrl+C to stop."
 echo "Ensure room server config mediaNodes matches host ${PUBLIC_IP}, secret, and port 3000."
-echo "Open https://localhost:4443 (accept the Vite dev certificate warning once). Signaling is proxied to the room server on :8443."
-echo "Plain HTTP client: VITE_DEV_HTTP=1 yarn start → then use http://localhost:4443"
+echo "Open http://localhost:4443 (client runs in HTTP mode by default in this script)."
+echo "Signaling is proxied to the room server on :8443."
 wait

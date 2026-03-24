@@ -2,6 +2,7 @@ import { batch } from 'react-redux';
 import { lobbyPeersActions } from '../slices/lobbyPeersSlice';
 import { meActions } from '../slices/meSlice';
 import { peersActions } from '../slices/peersSlice';
+import type { Peer } from '../slices/peersSlice';
 import { permissionsActions } from '../slices/permissionsSlice';
 import { roomActions } from '../slices/roomSlice';
 import { drawingActions } from '../slices/drawingSlice';
@@ -90,7 +91,7 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 		canvasState: undefined
 	};
 
-	const hydratedPeers = hydratePeerProfiles(peers);
+	const hydratedPeers = hydratePeerProfiles(peers) as Peer[];
 
 	logger.warn(
 		'joinRoom response peers [count:%d, peers:%o]',
