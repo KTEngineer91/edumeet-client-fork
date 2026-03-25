@@ -12,17 +12,20 @@ import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig'
 import { useEffect, useState } from 'react';
 
 const StyledPeers = styled(Chip)(() => ({
-	position: 'relative',
-	width: '60%',
-	height: '60%',
-	left: '50%',
-	top: '50%',
-	transform: 'translate(-50%, -50%)',
-	textAlign: 'center',
+	// Keep audio-only aggregated name styling aligned with `DisplayName`
+	// (bottom-left overlay).
+	position: 'absolute',
+	left: '8px',
+	bottom: '8px',
+	width: 'auto',
+	maxWidth: 'calc(100% - 16px)',
+	transform: 'none',
+	textAlign: 'left',
 	color: 'white',
 	'& .MuiChip-label': {
 		display: 'block',
 		whiteSpace: 'normal',
+		textAlign: 'left',
 	},
 }));
 
