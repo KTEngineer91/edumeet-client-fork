@@ -26,6 +26,7 @@ import LoadingIconImage from "../public/images/loading_icon.png";
 import edumeetConfig from './utils/edumeetConfig';
 import { getBreezeshotUserDisplayName, getBreezeshotUserProfilePicture } from "./utils/avatarUtils";
 import { Logger } from "./utils/Logger";
+import { avatarDebug } from './utils/avatarDebug';
 
 type AppParams = {
   id: string;
@@ -136,6 +137,11 @@ const App = (): JSX.Element => {
       const resolvedName = getBreezeshotUserDisplayName(resolvedUser);
 
       logger.warn('validate-edumeet-room resolved user [name:%s, keys:%o]', resolvedName || '(empty)', Object.keys(resolvedUser));
+      avatarDebug('validate-edumeet-room resolved user', {
+        resolvedName,
+        resolvedPicture: getBreezeshotUserProfilePicture(resolvedUser),
+        keys: Object.keys(resolvedUser),
+      });
 
       setUserData(resolvedUser);
       writeSession(resolvedUser);
@@ -164,6 +170,11 @@ const App = (): JSX.Element => {
       const resolvedName = getBreezeshotUserDisplayName(resolvedUser);
 
       logger.warn('validate-token resolved user [name:%s, keys:%o]', resolvedName || '(empty)', Object.keys(resolvedUser));
+      avatarDebug('validate-token resolved user', {
+        resolvedName,
+        resolvedPicture: getBreezeshotUserProfilePicture(resolvedUser),
+        keys: Object.keys(resolvedUser),
+      });
 
       setUserData(resolvedUser);
       writeSession(resolvedUser);
@@ -275,6 +286,11 @@ const App = (): JSX.Element => {
     if (!roomId) return;
 
     logger.warn('join identity selected [roomId:%s, name:%s, hasPicture:%s]', roomId, name || '(empty)', Boolean(userPicture));
+    avatarDebug('join identity selected', {
+      roomId,
+      name,
+      picture: userPicture,
+    });
   }, [roomId, name, userPicture]);
 
   const renderBreezeShotInfoContainer = ({

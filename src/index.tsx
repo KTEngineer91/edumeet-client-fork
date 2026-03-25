@@ -21,8 +21,12 @@ const App = lazy(() => import('./App'));
 // const LandingPage = lazy(() => import('./views/landingpage/LandingPage'));
 const UnsupportedBrowser = lazy(() => import('./views/unsupported/UnsupportedBrowser'));
 
-if (import.meta.env.VITE_APP_DEBUG === '*' || !import.meta.env.PROD) {
-	debug.enable('* -engine* -socket* -RIE* *WARN* *ERROR*');
+// `Logger` uses the `debug` package; it is otherwise silent in production.
+// Enable our app namespaces everywhere so identity/avatar issues produce logs.
+if (import.meta.env.VITE_APP_DEBUG === '*') {
+	debug.enable('*');
+} else {
+	debug.enable('edumeet-client:*');
 }
 
 // eslint-disable-next-line no-console

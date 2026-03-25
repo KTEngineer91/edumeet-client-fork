@@ -16,6 +16,7 @@ import { Logger } from '../../utils/Logger';
 import { stopListeners } from './startActions';
 import { hydratePeerProfiles, upsertCachedPeerProfile } from '../../utils/peerProfileCache';
 import { setDisplayName, setPicture } from './meActions';
+import { avatarDebug } from '../../utils/avatarDebug';
 
 const logger = new Logger('RoomActions');
 
@@ -63,6 +64,7 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 	const { sessionId, picture } = getState().me;
 
 	logger.warn('joinRoom request [displayName:%s, hasPicture:%s]', displayName || '(empty)', Boolean(picture));
+	avatarDebug('joinRoom request', { displayName, picture });
 
 	const response = await signalingService.sendRequest('join', {
 		displayName,
@@ -98,6 +100,11 @@ export const joinRoom = (): AppThunk<Promise<void>> => async (
 		hydratedPeers.length,
 		hydratedPeers.map((peer) => ({ id: peer.id, displayName: peer.displayName, hasPicture: Boolean(peer.picture) }))
 	);
+	avatarDebug('joinRoom response peers', hydratedPeers.map((peer) => ({
+		id: peer.id,
+		displayName: peer.displayName,
+		picture: peer.picture,
+	})));
 
 	hydratedPeers.forEach((peer) => {
 		upsertCachedPeerProfile(peer.id, {
