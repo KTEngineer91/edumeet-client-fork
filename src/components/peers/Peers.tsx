@@ -8,6 +8,8 @@ import { activeSpeakerIsAudioOnlySelector, audioOnlySessionPeersSelector } from 
 import VideoBox from '../videobox/VideoBox';
 import { uiActions } from '../../store/slices/uiSlice';
 import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
+import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
+import { useEffect, useState } from 'react';
 
 const StyledPeers = styled(Chip)(() => ({
 	position: 'relative',
@@ -40,7 +42,37 @@ const Peers = ({ style }: PeersProps): JSX.Element => {
 	const visiblePeerNames = audioOnlyPeers.slice(0, 3);
 	const rest = audioOnlyPeers.slice(3);
 	const avatarSeed = visiblePeerNames[0]?.displayName || visiblePeerNames[0]?.id || 'Guest';
-	const avatarSrc = makeLetterAvatarSrc(getInitialLetter(avatarSeed));
+	const letterAvatarSrc = makeLetterAvatarSrc(getInitialLetter(avatarSeed));
+
+	// Use actual peer picture for the aggregated "audio-only" tile (first peer wins).
+	// This ensures we don't fall back to silhouette/letters when a peer has a picture.
+	const primaryAudioPeer = audioOnlyPeers[0];
+	const pictureUrl = resolveBreezeshotAvatarUrlFromConfig(primaryAudioPeer?.picture);
+	const [ pictureLoaded, setPictureLoaded ] = useState(false);
+
+	useEffect(() => {
+		if (!pictureUrl) {
+			setPictureLoaded(false);
+			return;
+		}
+
+		setPictureLoaded(false);
+		const img = new Image();
+
+		img.onload = () => setPictureLoaded(true);
+		img.onerror = () => {
+			// eslint-disable-next-line no-console
+			console.log('[edumeet:identity] audio-only avatar preload error', {
+				pictureUrl,
+				primaryPeerId: primaryAudioPeer?.id,
+			});
+			setPictureLoaded(false);
+		};
+
+		img.src = pictureUrl;
+	}, [ pictureUrl, primaryAudioPeer?.id ]);
+
+	const avatarSrc = pictureUrl && pictureLoaded ? pictureUrl : letterAvatarSrc;
 
 	const combinedPeerName = visiblePeerNames.map((peer) => {
 		let displayName = peer.displayName || peer.id;
