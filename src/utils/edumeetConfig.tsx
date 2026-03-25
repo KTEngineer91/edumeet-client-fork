@@ -41,6 +41,7 @@ declare global {
 }
 
 const logger = new Logger('EdumeetConfig');
+const loggedResolvedAvatarUrls = new Set<string>();
 
 const edumeetConfig: EdumeetConfig = {
 	...defaultEdumeetConfig,
@@ -51,6 +52,25 @@ const edumeetConfig: EdumeetConfig = {
 export function resolveBreezeshotAvatarUrlFromConfig(imageUrl?: string): string {
 	const baseUrl = (edumeetConfig as { breezeshotApiBaseUrl?: string }).breezeshotApiBaseUrl;
 	const resolved = resolveBreezeshotAvatarUrl(imageUrl, baseUrl);
+
+	// Diagnostics for broken avatars (wrong base URL, missing path, mixed-content, etc.)
+	// Logged once per distinct incoming `imageUrl` to avoid console spam.
+	const normalizedInput = (imageUrl ?? '').trim();
+
+	if (
+		normalizedInput &&
+		normalizedInput.startsWith('/uploads/') &&
+		!loggedResolvedAvatarUrls.has(normalizedInput)
+	) {
+		loggedResolvedAvatarUrls.add(normalizedInput);
+		// eslint-disable-next-line no-console
+		console.log('[edumeet:identity] resolve avatar url', {
+			input: normalizedInput,
+			baseUrl,
+			resolved,
+			pageProtocol: window.location.protocol,
+		});
+	}
 
 	if (resolved && window.location.protocol === 'https:' && resolved.startsWith('http://')) {
 		// If the page is HTTPS and the avatar URL is HTTP, browsers block it (mixed-content),
