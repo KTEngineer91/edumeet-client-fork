@@ -53,6 +53,7 @@ const Peers = ({ style }: PeersProps): JSX.Element => {
 	useEffect(() => {
 		if (!pictureUrl) {
 			setPictureLoaded(false);
+			
 			return;
 		}
 
