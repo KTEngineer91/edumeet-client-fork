@@ -4,18 +4,19 @@ import {
 	useAppSelector,
 	usePermissionSelector
 } from '../../store/hooks';
-import { breakoutRoomsSelector, inParentRoomSelector, isMobileSelector, parentParticipantListSelector } from '../../store/selectors';
+import { inParentRoomSelector, isMobileSelector, parentParticipantListSelector } from '../../store/selectors';
+// import { breakoutRoomsSelector } from '../../store/selectors';
 import { permissions } from '../../utils/roles';
 import {
-	breakoutRoomsLabel,
+	// breakoutRoomsLabel,
 	participantsLabel,
 	countdownTimerTitleLabel
 } from '../translated/translatedComponents';
 import ListMe from './ListMe';
 import ListModerator from './ListModerator';
 import ListPeer from './ListPeer';
-import BreakoutModerator from '../breakoutrooms/BreakoutModerator';
-import ListBreakoutRoom from '../breakoutrooms/ListBreakoutRoom';
+// import BreakoutModerator from '../breakoutrooms/BreakoutModerator';
+// import ListBreakoutRoom from '../breakoutrooms/ListBreakoutRoom';
 import CountdownTimer from '../countdowntimer/CountdownTimer';
 import edumeetConfig from '../../utils/edumeetConfig';
 import { useState, useEffect } from 'react';
@@ -25,7 +26,7 @@ import { createPortal } from 'react-dom';
 import { DragOverlay } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import PulsingBadge from '../pulsingbadge/PulsingBadge';
-import DroppableWrapper from '../draganddrop/DroppableWrapper';
+// import DroppableWrapper from '../draganddrop/DroppableWrapper';
 import DraggableWrapper from '../draganddrop/DraggableWrapper';
 
 const ParticipantListDiv = styled(Box)(({ theme }) => ({
@@ -39,18 +40,19 @@ const ListHeader = styled(Typography)({
 });
 
 const ParticipantList = (): JSX.Element => {
-	const breakoutsEnabled = useAppSelector((state) => state.room.breakoutsEnabled);
+	// Breakout rooms UI hidden — restore imports (incl. DroppableWrapper), hooks below, and JSX block in DndContextWrapper
+	// const breakoutsEnabled = useAppSelector((state) => state.room.breakoutsEnabled);
 	const isModerator = usePermissionSelector(permissions.MODERATE_ROOM);
 	const isMobile = useAppSelector(isMobileSelector);
 	const participants = useAppSelector(parentParticipantListSelector);
-	const canCreateRooms = usePermissionSelector(permissions.CREATE_ROOM);
-	const canChangeRoom = usePermissionSelector(permissions.CHANGE_ROOM);
-	const rooms = useAppSelector(breakoutRoomsSelector);
+	// const canCreateRooms = usePermissionSelector(permissions.CREATE_ROOM);
+	// const canChangeRoom = usePermissionSelector(permissions.CHANGE_ROOM);
+	// const rooms = useAppSelector(breakoutRoomsSelector);
 	const inParent = useAppSelector(inParentRoomSelector);
 	const [ draggedPeerIds, setDraggedPeerIds ] = useState<string[]>([]);
 	const [ activePeer, setActivePeer ] = useState<Peer | null>(null);
 	const [ showParticipantsList, setShowParticipantsList ] = useState<Peer[]>(participants);
-	const [ dragOver, setDragOver ] = useState<string>('');
+	const [ , setDragOver ] = useState<string>('');
 
 	// Ensure showParticipantsList is updated when new peer has joined/left
 	useEffect(() => {
@@ -72,6 +74,7 @@ const ParticipantList = (): JSX.Element => {
 			</>
 			}
 			<DndContextWrapper setShowParticipantsList={setShowParticipantsList} setDragOver={setDragOver} draggedPeerIds={draggedPeerIds} setDraggedPeerIds={setDraggedPeerIds} activePeer={activePeer} setActivePeer={setActivePeer}>
+				{/* Breakout rooms section hidden — uncomment hooks/imports above and restore:
 				{ (breakoutsEnabled && (rooms.length > 0 || canCreateRooms)) &&
 				<>
 					<ListHeader>
@@ -87,6 +90,7 @@ const ParticipantList = (): JSX.Element => {
 					</Flipper>
 				</>
 				}
+				*/}
 				{ (inParent || participants.length > 0) &&
 				<>
 					<ListHeader>

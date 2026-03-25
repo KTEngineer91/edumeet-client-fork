@@ -10,16 +10,13 @@ import { uiActions } from '../../store/slices/uiSlice';
 import { getInitialLetter, makeLetterAvatarSrc } from '../../utils/avatarUtils';
 import { resolveBreezeshotAvatarUrlFromConfig } from '../../utils/edumeetConfig';
 import { useEffect, useState } from 'react';
+import StateIndicators from '../stateindicators/StateIndicators';
 
-const StyledPeers = styled(Chip)(() => ({
-	// Keep audio-only aggregated name styling aligned with `DisplayName`
-	// (bottom-left overlay).
+// Match `DisplayName` `StyledChip`: same spacing + `size="small"` so border/height matches.
+const StyledPeers = styled(Chip)(({ theme }) => ({
 	position: 'absolute',
-	left: '8px',
-	bottom: '8px',
-	width: 'auto',
-	maxWidth: 'calc(100% - 16px)',
-	transform: 'none',
+	bottom: theme.spacing(1),
+	left: theme.spacing(1),
 	textAlign: 'left',
 	color: 'white',
 	'& .MuiChip-label': {
@@ -56,7 +53,7 @@ const Peers = ({ style }: PeersProps): JSX.Element => {
 	useEffect(() => {
 		if (!pictureUrl) {
 			setPictureLoaded(false);
-			
+
 			return;
 		}
 
@@ -96,16 +93,22 @@ const Peers = ({ style }: PeersProps): JSX.Element => {
 					height={style.height}
 					avatarSrc={avatarSrc}
 				>
-					<StyledPeers label={
-						<>
-							<Typography>
-								{ combinedPeerName }
-							</Typography>
-							<Typography>
-								{ rest.length > 0 && `and ${rest.length} more` }
-							</Typography>
-						</>
-					} variant='filled' onClick={ () => openUsersTab() } />
+					<StyledPeers
+						avatar={<StateIndicators peerId={primaryAudioPeer.id} />}
+						label={
+							<>
+								<Typography component='span' variant='inherit' sx={{ lineHeight: 1.2 }}>
+									{ combinedPeerName }
+								</Typography>
+								<Typography component='span' variant='inherit' sx={{ lineHeight: 1.2, display: 'block' }}>
+									{ rest.length > 0 && `and ${rest.length} more` }
+								</Typography>
+							</>
+						}
+						size='small'
+						variant='filled'
+						onClick={ () => openUsersTab() }
+					/>
 				</VideoBox>
 			}
 		</>
