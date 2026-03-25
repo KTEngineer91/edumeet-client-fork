@@ -25,6 +25,22 @@ if (import.meta.env.VITE_APP_DEBUG === '*' || !import.meta.env.PROD) {
 	debug.enable('* -engine* -socket* -RIE* *WARN* *ERROR*');
 }
 
+// eslint-disable-next-line no-console
+console.log('[edumeet] Client started — filter console by: edumeet  or  edumeet:identity');
+
+// Helpful even if the console is filtered/hidden: lets us verify the bundle is running.
+// eslint-disable-next-line no-console
+try {
+	(window as Window & { __edumeetIdentityStarted?: number }).__edumeetIdentityStarted = Date.now();
+} catch {
+	// ignore
+}
+
+try {
+	document.documentElement.setAttribute('data-edumeet-identity-started', '1');
+} catch {
+	// ignore
+}
 const logger = new Logger('index.tsx');
 const theme = createTheme(edumeetConfig.theme);
 const device = deviceInfo();
