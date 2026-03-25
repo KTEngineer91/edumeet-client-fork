@@ -52,7 +52,14 @@ return;
 		const img = new Image();
 
 		img.onload = () => setPictureLoaded(true);
-		img.onerror = () => setPictureLoaded(false);
+		img.onerror = () => {
+			// eslint-disable-next-line no-console
+			console.log('[edumeet:identity] avatar preload error', {
+				peerId,
+				pictureUrl,
+			});
+			setPictureLoaded(false);
+		};
 		img.src = pictureUrl;
 	}, [ pictureUrl ]);
 

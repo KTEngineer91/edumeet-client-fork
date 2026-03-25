@@ -90,6 +90,14 @@ const ListPeer = ({ peer, isModerator }: ListPeerProps): JSX.Element => {
 					alt={`${initialLetter} avatar`}
 					onError={() => {
 						// If the backend image URL fails (different server/CORS/404), fall back to the letter avatar.
+						// eslint-disable-next-line no-console
+						console.log('[edumeet:identity] avatar <img> error', {
+							peerId: peer.id,
+							peerDisplayName: peer.displayName,
+							picture: peer.picture,
+							resolvedPictureUrl: pictureUrl,
+							imgSrcTried: resolvedSrc,
+						});
 						if (pictureUrl) setPictureError(true);
 					}}
 				/>
