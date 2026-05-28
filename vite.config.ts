@@ -5,13 +5,18 @@ import viteTsconfigPaths from 'vite-tsconfig-paths';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { visualizer } from "rollup-plugin-visualizer";
 
+// basicSsl: https://localhost:4443 works locally (accept browser warning once).
+// Proxy forwards /socket.io to the room server on plain HTTP:8443 so the browser never opens wss://localhost:8443 (avoids room-server TLS issues).
+// Set VITE_DEV_HTTP=1 for http://localhost:4443 + ws proxy instead (no basicSsl).
+const devHttp = process.env.VITE_DEV_HTTP === '1';
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [
 		react({ babel: { parserOpts: {} } }),
 		eslint(),
 		viteTsconfigPaths(),
-		basicSsl(),
+		...(devHttp ? [] : [basicSsl()]),
 /* 		splitVendorChunkPlugin(),
  */		visualizer({
 			emitFile: false,
@@ -20,12 +25,19 @@ export default defineConfig({
 
 	],
 	server: {
-		https: true,
+		https: !devHttp,
 		port: 4443,
 		host: true,
 		hmr: {
 			path: '/vite/'
-		}
+		},
+		proxy: {
+			'/socket.io': {
+				target: 'http://127.0.0.1:8443',
+				changeOrigin: true,
+				ws: true,
+			},
+		},
 	},
 	resolve: {
 		alias: {
