@@ -18,6 +18,9 @@ var config = {
 	infoTooltipDesc: 'Tooltip desc ... Lorem ipsum',
 	// Location of management service.
 	managementUrl: 'http://localhost:3030',
+	// Base URL for BreezeShot profile images when `imageUrl` is a relative path (`/uploads/...`).
+	// Use your local BreezeShot API (e.g. http://localhost:3002) when uploads are not on production.
+	breezeshotApiBaseUrl: 'http://localhost:3002',
 	// Location of the privacy files.
 	imprintUrl: '',
 	privacyUrl: '',
@@ -170,25 +173,8 @@ var config = {
 	// Privacy notice. If you want to link your privacy notices, please provide a URL in this variable. If it is empty, no link will be shown.
 	privacyUrl: '',
 
-	// Client theme. Take a look at mui theme documentation.
-	theme: {
-		palette: {
-			primary: {
-				main: '#313131',
-			}
-		},
-		// The page background image URL
-		backgroundImage: 'images/background.jpg',
-		appBarColor: '#313131', // AppBar background color
-		appBarFloating: true, // If true, the AppBar will be moved in a bit from the top and sides of the page
-		// If not null, it shows the logo loaded from the specified URL, otherwise it shows the title.
-		logo: 'images/logo.edumeet.svg',
-		activeSpeakerBorder: '1px solid rgba(255, 255, 255, 1.0)',
-		videoBackroundColor: 'rgba(49, 49, 49, 0.9)',
-		videoAvatarImage: 'images/buddy.svg',
-		sideContentItemColor: 'rgba(255, 255, 255, 0.4)',
-		sideContentItemDarkColor: 'rgba(150, 150, 150, 0.4)',
-		roundedness: 10, // Rounded corners on the various elements
-	},
+	// Optional: override only what you need. If you omit `theme`, defaults from src/utils/types.tsx apply (fork branding).
+	// theme: { logo: '/images/pages/Logo.png', appBarColor: '#313131', ... },
+
 	reduxLoggingEnabled: false
 };
